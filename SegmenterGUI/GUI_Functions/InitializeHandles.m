@@ -53,7 +53,10 @@ if handles.bd_pathway
         msgbox('You are not in a directory with images in file structure "Well ###"... Try again')
         return
     end
-
+    if (handles.cidrecorrect)
+       NUC.CIDREmodel.v = csvread([handles.cidreDir filesep 'cidre_model_v.csv']);
+       NUC.CIDREmodel.z = csvread([handles.cidreDir filesep 'cidre_model_z.csv']);
+    end
     handles.NUC = NUC;
 
     for i = 1:handles.numCh
@@ -79,7 +82,10 @@ else
         return
     end
 
-
+    if (handles.cidrecorrect)
+       NUC.CIDREmodel.v = csvread([handles.cidreDir filesep 'cidre_model_v.csv']);
+       NUC.CIDREmodel.z = csvread([handles.cidreDir filesep 'cidre_model_z.csv']);
+    end
     %Create a structure for each of the channels
     for i = 1:handles.numCh
         chnm = ['CH_' num2str(i)];
@@ -91,7 +97,9 @@ else
            Cyto.(chnm).CIDREmodel.z = csvread([handles.cidreDir filesep 'cidre_model_z.csv']);
         end
     end
-
+    if handles.numCh==0
+        Cyto = struct();
+    end
     %Correct directory listings based on the number in the image file between the - -
     %eg the 1428 in the file name 20150901141237-1428-R05-C04.jpg
     %This is necessary due to matlab dir command sorting placing 1000 ahead of

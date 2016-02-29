@@ -25,7 +25,7 @@ function varargout = SegmentReview(varargin)
 
 % Edit the above text to modify the response to help SegmentReview
 
-% Last Modified by GUIDE v2.5 02-Jan-2016 18:19:21
+% Last Modified by GUIDE v2.5 23-Feb-2016 08:57:54
 
 	% Begin initialization code - DO NOT EDIT
 	gui_Singleton = 1;
@@ -131,8 +131,9 @@ function InitNewImage(handles)
 	path]						= uigetfile('*.*', ...
 											'Select an image: ', ...
 											handles.directory);
+    handles.path = path;
 	handles.imagefile			= [path imagefile];
-    temp = load('Compiled Segmentation Results.mat');
+    temp = load([handles.directory filesep 'Compiled Segmentation Results.mat']);
     Seg = temp.Seg;
     idx = find(strcmp(imagefile,{Seg.FileName{:}}));
     idx
@@ -953,4 +954,57 @@ function edit3_CreateFcn(hObject, eventdata, handles)
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in pushbutton8.
+function pushbutton8_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton8 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+	
+    filenames = dir(handles.path);
+    idx = strfind(handles.imagefile,'/');
+    imagefile = handles.imagefile(idx(end)+1:end);
+    image_idx = find(cellfun(@isempty,strfind({filenames.name},imagefile))==0);
+    if image_idx ~= length(filenames)
+        handles.imagefile = [handles.path filesep filenames(image_idx+1).name];
+    else
+        handles.imagefile = [handles.path filesep filenames(1).name];
+    end
+
+    temp = load('Compiled Segmentation Results.mat');
+    Seg = temp.Seg;
+    idx = find(strcmp(imagefile,{Seg.FileName{:}}));
+    idx
+    handles.image = imread(handles.imagefile);
+    handles.wellName = [Seg.RowSingle(idx,:) '_' Seg.ColSingle(idx,:)];
+    handles.imageName = Seg.FileName{idx};
+    
+% 	[handles.image,     ...
+% 	handles.wellName,  ...
+% 	handles.imageName] 			= LoadImage(handles.imagefile);
+
+    temp_id = strfind(handles.imagefile,'.');
+    handles.imExt = char(handles.imagefile(temp_id:end));
+    handles.imExt
+    handles.imageName
+	h = msgbox('Segmenting image');
+    
+    idx = Seg.ImNumSingle(idx);
+	[handles.props, ...
+	handles.labels] 			= NaiveSegment_firstpass(handles.directory,idx);
+	close(h);
+
+	set(handles.CurImage, 'String', handles.imageName);
+	
+	set(handles.SaveImgToSet,   'Enable', 'on');
+	set(handles.deleteObj, 	  'Enable', 'off');  
+	set(handles.SaveObjToSet,   'Enable', 'on');
+	handles = PopulateObjSetPopUp(handles);
+	guidata(handles.output, handles);
+
+	set(handles.ImageDisplay, 'NextPlot', 'replacechildren');
+	DrawDisplay(handles);
+     
 end

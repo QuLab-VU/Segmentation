@@ -35,7 +35,7 @@ else
     CO.tim.min = str2double(nm(11:12));
 end
 %Initalize array that holds the label image for cytoplasm
-
+CO.filename
 %Read in all the images into Im_array matrix and correct for illumination with CIDRE or
 %tophat.  Store the nuclear image first!
 tempIm = imread(char(NUC.filnms(i)));
@@ -52,7 +52,7 @@ if size(tempIm,3) ~=1
 end
 
 if cidrecorrect
-    tempIm = ((double(tempIm))./(Cyto.CH_1.CIDREmodel.v))*mean(Cyto.CH_1.CIDREmodel.v(:));
+    tempIm = ((double(tempIm))./(NUC.CIDREmodel.v))*mean(NUC.CIDREmodel.v(:));
 elseif background_corr
     cont = uint16(imread(CorrIm_file));
     tempIm = (tempIm - cont);
@@ -99,7 +99,7 @@ end
 
 
 %To avoid segmenting blank images...  Make Variable in future?
-if max(std(Im_array(:,:,1))) < 15
+if max(std(Im_array(:,:,1))) < 10
     Nuc_label = zeros(size(Nuc_label));
 else
     %%Now segment the nucleus

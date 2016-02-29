@@ -12,11 +12,11 @@ handles.numCh
 %Declare structure for holding data
 Seg = struct('Nuc_IntperA',[],'NucArea',[],'NucInt',[],'numCytowoutNuc',[],...
     'cellcount',[],'RW',cell(1),'CL',cell(1),'ImNum',[],'min',cell(1),'day',...
-    cell(1),'month',cell(1),'year',cell(1),'NucBackground',[],...
+    cell(1),'month',cell(1),'year',cell(1),'hour',cell(1),'NucBackground',[],...
     'class',struct('debris',[],'nucleus',[],'over',[],'under',[],...
     'predivision',[],'postdivision',[],'apoptotic',[],'newborn',[],'edge',[]),...
     'xpos',[],'ypos',[],'RowSingle',[],'ColSingle',[],'cellId',[],...
-    'yearFile',[],'monthFile',[],'dayFile',[],'minFile',[],'ImNumSingle',[])
+    'yearFile',[],'monthFile',[],'dayFile',[],'minFile',[],'hourFile',[],'ImNumSingle',[])
 for q = 1:handles.numCh
     chnm = ['CH_' num2str(q)]
     Seg.(chnm).IntperA = [];
@@ -32,6 +32,8 @@ for i = 1:size(seg_file,1)
         Seg.year = [Seg.year;repmat(CO.tim.year,CO.cellCount,1)];
         Seg.month = [Seg.month;repmat(CO.tim.month,CO.cellCount,1)];
         Seg.day = [Seg.day;repmat(CO.tim.day,CO.cellCount,1)];
+        Seg.hour = [Seg.hour; repmat(CO.tim.hr,CO.cellCount,1)];
+        Seg.hourFile = [Seg.hourFile; CO.tim.hr];
         Seg.min=[Seg.min;repmat(CO.tim.min,CO.cellCount,1)];
         Seg.yearFile = [Seg.yearFile;CO.tim.year];
         Seg.dayFile = [Seg.dayFile;CO.tim.day];
@@ -76,6 +78,8 @@ for i = 1:size(seg_file,1)
         Seg.month = [Seg.month;CO.tim.month];
         Seg.day = [Seg.day;CO.tim.day];
         Seg.min=[Seg.min;CO.tim.min];
+        Seg.hour = [Seg.hour; CO.tim.hr];
+        Seg.hourFile = [Seg.hourFile; CO.tim.hr];
         Seg.yearFile = [Seg.yearFile;CO.tim.year];
         Seg.dayFile = [Seg.dayFile;CO.tim.day];
         Seg.monthFile = [Seg.monthFile;CO.tim.month];
@@ -144,26 +148,26 @@ Seg.class.edge = Seg.class.edge';
 
 
 save([handles.expDir filesep 'Compiled Segmentation Results.mat'],'Seg')
-Condition = {'Year','Month','Day','Min','Row','Col','ImNumber','cellId','Xposition','Yposition','Nuc_IntperA','NucArea','NucInt'};
+Condition = {'Year','Month','Day','Hour','Min','Row','Col','ImNumber','cellId','Xposition','Yposition','Nuc_IntperA','NucArea','NucInt'};
 tempMat = [];
-tempMat = array2table([Seg.year,Seg.month,Seg.day,Seg.min],'VariableNames',{Condition{1:4}}); 
-tempMat = [tempMat, cell2table([cellstr(Seg.RW),cellstr(Seg.CL)],'VariableNames',{Condition{5:6}})];
-tempMat = [tempMat, array2table([Seg.ImNum,Seg.cellId,Seg.xpos,Seg.ypos,Seg.Nuc_IntperA,Seg.NucArea,Seg.NucInt],'VariableNames',{Condition{7:13}})];
+tempMat = array2table([Seg.year,Seg.month,Seg.day,Seg.hour,Seg.min],'VariableNames',{Condition{1:5}}); 
+tempMat = [tempMat, cell2table([cellstr(Seg.RW),cellstr(Seg.CL)],'VariableNames',{Condition{6:7}})];
+tempMat = [tempMat, array2table([Seg.ImNum,Seg.cellId,Seg.xpos,Seg.ypos,Seg.Nuc_IntperA,Seg.NucArea,Seg.NucInt],'VariableNames',{Condition{8:14}})];
 for q = 1:handles.numCh
     chnm = ['CH_' num2str(q)];
     Condition = {Condition{:}, [chnm '_IntperA'],[chnm '_Intensity'],[chnm '_Area'],[chnm '_Perimeter'],[chnm '_AtoP']};
-    tempMat = [tempMat, array2table([Seg.(chnm).IntperA,Seg.(chnm).Intensity,Seg.(chnm).Area,Seg.(chnm).Perimeter,Seg.(chnm).AtoP],'VariableNames',{Condition{(q-1)*5+14:q*5+13}})];
+    tempMat = [tempMat, array2table([Seg.(chnm).IntperA,Seg.(chnm).Intensity,Seg.(chnm).Area,Seg.(chnm).Perimeter,Seg.(chnm).AtoP],'VariableNames',{Condition{(q-1)*5+15:q*5+14}})];
 end
 Condition = {Condition{:},'Class_Nucleus','Class_Debris','Class_Over','Class_Under','Class_Predivision','Class_Postdivision','Class_Newborn','Class_Apoptotic','Class_Edge'};
-tempMat = [tempMat, array2table([Seg.class.nucleus,Seg.class.debris,Seg.class.over,Seg.class.under,Seg.class.predivision,Seg.class.postdivision,Seg.class.newborn,Seg.class.apoptotic,Seg.class.edge],'VariableNames',{Condition{(handles.numCh)*5+14:end}})];
+tempMat = [tempMat, array2table([Seg.class.nucleus,Seg.class.debris,Seg.class.over,Seg.class.under,Seg.class.predivision,Seg.class.postdivision,Seg.class.newborn,Seg.class.apoptotic,Seg.class.edge],'VariableNames',{Condition{(handles.numCh)*5+15:end}})];
 writetable(tempMat,[handles.expDir filesep 'Cell Events.csv'])
 
 tempMat = [];
 Condition = [];
-Condition = {'ImageNumber','Year','Month','Day','Min','Row','Col','CellCount','NuclearCh_Background'};
-tempMat = array2table([Seg.ImNumSingle,Seg.yearFile,Seg.monthFile,Seg.dayFile,Seg.minFile],'VariableNames',{Condition{1:5}}); 
-tempMat = [tempMat, cell2table([cellstr(Seg.RowSingle),cellstr(Seg.ColSingle)],'VariableNames',{Condition{6:7}})];
-tempMat = [tempMat, array2table([Seg.cellcount,Seg.NucBackground],'VariableNames',{Condition{8:9}})];
+Condition = {'ImageNumber','Year','Month','Day','Hour','Min','Row','Col','CellCount','NuclearCh_Background'};
+tempMat = array2table([Seg.ImNumSingle,Seg.yearFile,Seg.monthFile,Seg.dayFile,Seg.hourFile,Seg.minFile],'VariableNames',{Condition{1:6}}); 
+tempMat = [tempMat, cell2table([cellstr(Seg.RowSingle),cellstr(Seg.ColSingle)],'VariableNames',{Condition{7:8}})];
+tempMat = [tempMat, array2table([Seg.cellcount,Seg.NucBackground],'VariableNames',{Condition{9:10}})];
 for q = 1:handles.numCh
     chnm = ['CH_' num2str(q)];
     Condition = {Condition{:}, [chnm '_Background']};
