@@ -4,7 +4,7 @@
 
 Christian Meyer (christian.t.meyer@vanderbilt.edu)
 
-### Currently under construction:
+### Currently under construction
 * Integration of Bayes Classifier
 * Tracking Code
 * Making GUI windows normalized to the screen they are on
@@ -24,17 +24,12 @@ After closing the Window, Run SegmenterV2 from the command line to open the
 GUI involved in segmenting the cells.  
 
 Algorithm follows the following:
-
 1. Illumination correction by either cidre correction where a predefined CIDRE 
 map has been generated or by subtraction of a control image.
-
 2. Otsu's multithresholding algorithm to binarize image
-
 3. Filter image with matlab's imtophat function to remove noise
-
 4. Water shed segmentation by image inversion -> pixel suppression -> and 
 watershed segmentation using matlab function
-
 5. K-nearest neighbor algorithm to predict cytoplasm
 
 Segmentation can be run in parallel.  Currently the waitbar assumes the 
