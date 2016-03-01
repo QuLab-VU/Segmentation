@@ -1,4 +1,4 @@
-## Segmentation code for the cellavista and BD pathway imaging platforms
+## Segmentation code for the Cellavista and BD pathway imaging platforms
 
 **Version 2.17.16**
 
@@ -18,23 +18,15 @@ Christian Meyer (christian.t.meyer@vanderbilt.edu)
 
 ### Description
 
-Code works by calling FileSorterGUI first from the command line to sort the 
-images in the experimental folder generated from the Cellavista
-After closing the Window, Run SegmenterV2 from the command line to open the
-GUI involved in segmenting the cells.  
+Code works by calling FileSorterGUI first from the command line to sort the images in the experimental folder generated from the Cellavista After closing the Window, Run SegmenterV2 from the command line to open the GUI involved in segmenting the cells.  
 
 Algorithm follows the following:
-1. Illumination correction by either cidre correction where a predefined CIDRE 
-map has been generated or by subtraction of a control image.
+1. Illumination correction by either cidre correction where a predefined CIDRE map has been generated or by subtraction of a control image.
 2. Otsu's multithresholding algorithm to binarize image
 3. Filter image with matlab's imtophat function to remove noise
-4. Water shed segmentation by image inversion -> pixel suppression -> and 
-watershed segmentation using matlab function
+4. Water shed segmentation by image inversion -> pixel suppression -> and watershed segmentation using matlab function
 5. K-nearest neighbor algorithm to predict cytoplasm
 
-Segmentation can be run in parallel.  Currently the waitbar assumes the 
-number of available workers is 4.
+Segmentation can be run in parallel.  Currently the waitbar assumes the number of available workers is 4.
 
-Next is creation of a classifier to generate probabilities associated with 
-the characteristics of the nuclei generated from the segmentation used in
-the subsequent tracking algorithm
+Next is creation of a classifier to generate probabilities associated with the characteristics of the nuclei generated from the segmentation used in the subsequent tracking algorithm
