@@ -1,10 +1,10 @@
-# Segmentation Code Christian Meyer christian.t.meyer@vanderbilt.edu
+## Segmentation code for the cellavista and BD pathway imaging platforms
 
-version 2.17.16
+**Version 2.17.16**
 
-Segmentation code for the cellavista and BD pathway imaging platforms
+Christian Meyer (christian.t.meyer@vanderbilt.edu)
 
-## Currently under construction:
+### Currently under construction:
 * Integration of Bayes Classifier
 * Tracking Code
 * Making GUI windows normalized to the screen they are on
@@ -15,6 +15,8 @@ Segmentation code for the cellavista and BD pathway imaging platforms
 * Put widget in Bayes classifier gui to move to next image
 * Put widget in bayes classifier gui to build logistic regression classifier
 * Put widget in bayes classifier to run cell tracking algorithm based
+
+### Description
 
 Code works by calling FileSorterGUI first from the command line to sort the 
 images in the experimental folder generated from the Cellavista
