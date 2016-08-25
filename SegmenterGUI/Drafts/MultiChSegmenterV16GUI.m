@@ -1,6 +1,6 @@
-function [] = MultiChSegmentNoParallel(handles)
+function [] = MultiChSegmenterV14GUI(handles)
 
-% Multi Channel Cell Segmentation with channel correction without parallel loop 
+% Multi Channel Cell Segmentation with channel correction.  
 %%Christian Meyer 12.30.15
 %Segmentation code to find the intensities per cell of the each channel for
 %a series of images from the CellaVista presorted with the
@@ -18,10 +18,10 @@ function [] = MultiChSegmentNoParallel(handles)
 %The intensity, area, and nuclear and cytoplasmic labels are stored in a structure which is saved to
 %a folder called Segemented with the row, channel, and image number in the name.
 
-
-h = msgbox('Please Be Patient, This box will close when operation is finished. See Command Window for estimate of time to completion')
+h = msgbox('Please Be Patient, This box will close when operation is finished. See Command Window for estimate of time to completion');
 
 imExt = handles.imExt;
+%experiment Directory
 expDir = handles.expDir;
 %Whether to correct with cidrecorrect
 cidrecorrect = handles.cidrecorrect;
@@ -55,45 +55,65 @@ background_corr = handles.background_corr;
 CorrIm_file = handles.CorrIm_file;
 %Is this a pathway experiment
 bd_pathway = handles.bd_pathway;
-%Binarize by threshold
-thresh_based_bin = handles.thresh_based_bin;
-%Threshold binarization
-back_thresh = handles.back_thresh;
 
 
-filnames = dir([expDir '/Segmented']); temp = [];
-if length(filnames)>2
-    for i = 3:length(filnames)
-        temp{i-2} = filnames(i).name(9:strfind(filnames(i).name,'.')-1)
-    end
-    x = [1:length(NUC.filnms)];
-    y = sort(str2double(temp));
-    unfinishedImages = x(~ismember(x,y));
-else
-    unfinishedImages = 1:length(NUC.filnms);
-end
+%Make a directory for the segemented files
+mkdir([handles.expDir filesep 'Segmented'])
 
+%Segmentation occurs in multiple steps
+%First nuclei are segmented using Otsu's method to determine background in 
+%the nuclear channel.  The image is quantized into three tiers with the top
+%two being assigned as nucleus (nucleus in focus and nucleus out of focus)
+% Use of a watershed segmentation algorithm then assigns a label to each
+% cell
+%Each of the fluorescent channels are then binarized, added, and segmented.
+%The intensity in each channel for each cell is then subsequently measured.
+%Subsequent use of a noise filter and hole filling smooths out the image and
+%then use of a watershed segmentation to label all the cells.
+%The label for the cell's cytoplasm is determined using a
+%kmeans nearest neighbor algorithm from each nucleus
+%Each segmented image is saved in a Segmentation folder.
+
+
+%Initialize functions involved in parallel computing
+%Parfor_progress allows for an estimation of the amount of time remaining
+%in each segmentation
+%Par() is a class variable which records information about the parallel
+%processing session and allows the measurement of time to complete each
+%iteration.
+%Both have been adapted from online code.
+% http://www.mathworks.com/matlabcentral/fileexchange/32101-progress-monitor--progress-bar--that-works-with-parfor
+% http://www.mathworks.com/matlabcentral/fileexchange/27472-partictoc/content/Par.m
+% Respectively
+parfor_progress(size(NUC.filnms,2),[],[]);ParallelPoolInfo = Par(size(NUC.filnms,2));
 %For all images
-for rand = 1:size(unfinishedImages,2)
-    tic
-    i = unfinishedImages(rand);
-
-    im_info = imfinfo(char(NUC.filnms(i)),imExt);
+parfor i = 1:size(NUC.filnms,2)
+    Par.tic;
     %Send to segmenter code
-    [CO,Im_array] = NaiveSegmentV7(cidrecorrect,NucnumLevel,CytonumLevel,surface_segment,...
-    nuclear_segment,noise_disk,nuc_noise_disk,nuclear_segment_factor,surface_segment_factor,...
-    smoothing_factor,NucSegHeight,numCh,NUC,Cyto,i,background_corr,CorrIm_file,bd_pathway,...
-    back_thresh,thresh_based_bin,im_info)
+    [CO,Im_array] = NaiveSegmentV4(imExt,cidrecorrect,NucnumLevel,CytonumLevel,surface_segment,nuclear_segment,noise_disk,nuc_noise_disk,...
+    nuclear_segment_factor,surface_segment_factor,cl_border,smoothing_factor,NucSegHeight,numCh,NUC,Cyto,i,background_corr,CorrIm_file,bd_pathway);
+    
     %Save segmentation in a directory called segmented
     %Call a function to be able to save result
-    save([expDir '/Segmented/' rw '_' cl '_' num2str(i) '.mat'], 'CO')
-    t(rand) = toc;
-    fprintf('%.2f%% Complete, Estimated Time: %.2f\n',rand/length(unfinishedImages)*100,mean(t)/60*(length(unfinishedImages)-rand))
+    parforsaverGUI(CO.rw,CO.cl,CO,i,expDir)
+    ParallelPoolInfo(i) = Par.toc
+    %Update the status of the segmentation.
+    parfor_progress([],ParallelPoolInfo(i).ItStop-ParallelPoolInfo(i).ItStart,i);
+    %save(['Segmented/' rw '_' cl '_' num2str(i) '.mat'], 'CO')
+    %Delete the stored variables... Not sure if this is necessary
+    CO=structfun(@(f)[] ,CO,'uni',0);
+    Im_array = [];
 end
+stop(ParallelPoolInfo)
+parfor_progress(0,[],[]);
+disp('We are finishing up processing...just a little more to go...(~2min)')
+%Next we want to label all the segmented cells as nucleus, new born,
+%oversegmented (too many in a single cell), undersegmented (multiple cells
+%called 1) ect.  To do this we do a first pass based on nuclear size.
+%This annotation is filled out in the baysian segmenter portion.
 
-%Now Open all the segmented images and compile the statistics on nuclear
+%Open all the segmented images and compile the statistics on nuclear
 %size
-
 seg_file = dir([handles.expDir filesep 'Segmented/*.mat']);
 Area = [];
 for i = 1:size(seg_file,1)
@@ -112,15 +132,19 @@ for i = 1:size(seg_file,1)
     CO.class.nucleus    	= [];
     CO.class.over       	= [];
     CO.class.under      	= [];
+    CO.class.predivision 	= [];
+    CO.class.postdivision	= [];
     CO.class.apoptotic  	= [];
-    CO.class.mitotic    	= [];
+    CO.class.newborn    	= [];
     if CO.cellCount == 0
         CO.class.debris    	= 0;
         CO.class.nucleus   	= 0;
         CO.class.over      	= 0;
         CO.class.under     	= 0;
+        CO.class.predivision	= 0;
+        CO.class.postdivision	= 0;
         CO.class.apoptotic 	= 0;
-        CO.class.mitotic   	= 0;
+        CO.class.newborn   	= 0;
     else
         %Run a first pass to classify the nuclei
         for k=1:CO.cellCount
@@ -128,8 +152,10 @@ for i = 1:size(seg_file,1)
             CO.class.nucleus(k)    	= 0;
             CO.class.over(k)       	= 0;
             CO.class.under(k)      	= 0;
+            CO.class.predivision(k) 	= 0;
+            CO.class.postdivision(k)	= 0;
             CO.class.apoptotic(k)  	= 0;
-            CO.class.mitotic(k)    	= 0;
+            CO.class.newborn(k)    	= 0;
         end
         for k=1:CO.cellCount
             %rough first pass classification
@@ -137,6 +163,7 @@ for i = 1:size(seg_file,1)
                 if(log(CO.Nuc.Area(k)) < avg_dist-3*std_dist)    
                   CO.class.debris(k) 	= 1;
                 elseif(log(CO.Nuc.Area(k)) < avg_dist-1.5*std_dist) 
+                  CO.class.newborn(k) 	= 1;
                   CO.class.nucleus(k) 	= 1;
                 elseif(log(CO.Nuc.Area(k))  < avg_dist+1.8*std_dist)  
                   CO.class.nucleus(k) 	= 1;
@@ -150,7 +177,4 @@ for i = 1:size(seg_file,1)
     clear CO
 end
 close(h)
-
-
-
 

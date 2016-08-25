@@ -7,7 +7,7 @@ load('Compiled Segmentation Results.mat')
 maxNumGMclust = 7;
 % q = 1;chnm = ['CH_' num2str(q)];
 % fontsz = 20;
-% row = unique(Seg.RW,'rows');row = row(1,:);
+row = row(2,:);
 Im = []; options = statset('MaxIter',100000,'Display','final','TolFun',10.^-20);
 columns = unique(Seg.CL,'rows');
 %Chance to ImNum_perWell = sum(Seg.ColSingle == row(1,:)); if test
@@ -19,7 +19,7 @@ end
 ImNum_perWell = sum(temp)
 
 color = jet(length(conditions)); BIC = [], AIC = [];
-for p = 2:length(conditions)
+for p = 2:2%length(conditions)
     Im = [];
     p
     col = columns(p,:);
@@ -31,36 +31,36 @@ for p = 2:length(conditions)
     idx = [idx, find(temp(:,1) == 1 & temp(:,2) == 1)]; %Index of all the images in specified row and col
     tempdata(1,:) = Seg.(chnm).IntperA';
     tempdata(2,:) = Seg.NucArea;
-    to_remove = intersect(idx,[find(Seg.class.under==1); find(Seg.class.debris==1); find(Seg.NucArea ==0)]);
+    to_remove = intersect(idx,[find(Seg.class.under==1); find(Seg.class.debris==1); find(Seg.NucArea==0); find(Seg.class.edge == 1)]);
     idx = idx(~ismember(idx,to_remove));
     tempdata = tempdata(:,idx);
-    for k = 2:maxNumGMclust       
+    for k = 1:maxNumGMclust       
         try
             GMmodel = fitgmdist(tempdata(1,:)',k,'options',options); %Fit a mixed gaussian model
-            BIC(p,k-1) = GMmodel.BIC;
-            AIC(p,k-1) = GMmodel.AIC;
+            BIC(p,k) = GMmodel.BIC;
+            AIC(p,k) = GMmodel.AIC;
         catch
-            BIC(p,k-1) = NaN
-            AIC(p,k-1) = NaN
+            BIC(p,k) = NaN
+            AIC(p,k) = NaN
         end
     end
 end
 
 figure
 y = []
-for p = 2:length(conditions)
+for p = 2:2%length(conditions)
 	hold on  
-    y = BIC(p,~isnan(BIC(p,:))); x = 2:maxNumGMclust;
+    y = BIC(p,~isnan(BIC(p,:))); x = 1:maxNumGMclust;
     x = x(~isnan(BIC(p,:)));
     y = y./max(y);
     plot(x,y,'linewidth',2,'color',color(p,:))
 end
 legend({conditions{1:end-1}})
-str = ['BIC by dilution' test]
+str = ['BIC by cluster #' test]
 title(str)
 ylabel('Normalized BIC')
 xlabel('Cluster #')
-set(gca,'fontsize',fontsz,'XTick',[2:maxNumGMclust])
+set(gca,'fontsize',fontsz,'XTick',[1:maxNumGMclust])
 
 
 id = []

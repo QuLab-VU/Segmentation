@@ -1,11 +1,11 @@
 %Signal to noise 
 load('Compiled Segmentation Results.mat')
-test = ' KRT14 (2ab AF647)'
-conditions = {'1:100','1:200','1:400','1:800','1:1600','Control'}
+test = ' GATA3 (2ab AF647)'
+conditions = {'1:800','1:1600','1:3200','1:6400','1:12800','Control'}
 q = 1;
 fontsz = 20;
 row = unique(Seg.RW,'rows');
-row = row(1,:);
+row = row(2,:);
 %Look at all conditions together
 figure()
 clf
@@ -27,7 +27,7 @@ for j = 2:length(conditions)
         temp(i,2) = strcmp(Seg.CL(i,:),col);
     end
     idx = [idx, find(temp(:,1) == 1 & temp(:,2) == 1)]; %Index of all the images for R03
-    to_remove = intersect(idx,[find(Seg.class.under==1); find(Seg.class.debris==1); find(Seg.NucArea==0)]);
+    to_remove = intersect(idx,[find(Seg.class.under==1); find(Seg.class.debris==1); find(Seg.NucArea==0); find(Seg.class.edge == 1)]);
     %    to_remove = intersect(idx,[find(Seg.cellcount<40)]);
 
     idx = idx(~ismember(idx,to_remove));
