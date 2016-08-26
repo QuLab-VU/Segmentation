@@ -613,8 +613,8 @@ h = msgbox(str)
 [handles] = ExportSegmentationV4(handles)
 close(h)
 
-set(findobj('Tag','pushbutton15'),'Visible','on')
-set(findobj('Tag','pushbutton9'),'Visible','on')
+%set(findobj('Tag','pushbutton15'),'Visible','on')
+%set(findobj('Tag','pushbutton9'),'Visible','on')
 
     
 guidata(hObject,handles)
@@ -625,6 +625,7 @@ function pushbutton9_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton9 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+save([handles.expDir filesep 'Handles.mat'],'handles')
 MLClassifiers(1,handles);
 'hello'
 guidata(hObject,handles)

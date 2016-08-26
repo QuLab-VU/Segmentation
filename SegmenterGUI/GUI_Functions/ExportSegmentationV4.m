@@ -78,8 +78,8 @@ Seg.Nuc.Max_Gradient_Full   = zeros(handles.totCell,1);
 Seg.Nuc.Std_Gradient_Full   = zeros(handles.totCell,1);
 Seg.xpos                    = zeros(handles.totCell,1);
 Seg.ypos                    = zeros(handles.totCell,1);
-Seg.Nuc.Background          = zeros(handles.totIm,1);
-Seg.Mean_Dist_to_closest_objs = zeros(handles.totCell,1);
+Seg.NucBackground          = zeros(handles.totIm,1);
+Seg.Nuc.Mean_Dist_to_closest_objs = zeros(handles.totCell,1);
 
 %Cytoplasm shape based properties
 Seg.Cyto.Area             = zeros(handles.totCell,1);
@@ -165,7 +165,7 @@ for i = 1:size(seg_file,1)
         Seg.Nuc.EquivDiameter(cnt:cnt2)     = CO.Nuc.EquivDiameter;
         Seg.Nuc.MajorAxisLength(cnt:cnt2)   = CO.Nuc.MajorAxisLength;
         Seg.Nuc.MinorAxisLength(cnt:cnt2)   = CO.Nuc.MinorAxisLength;
-        Seg.Nuc.Background(i)               = CO.Nuc.Background;
+        Seg.NucBackground(i)               = CO.NucBackground;
         Seg.Nuc.Circularity(cnt:cnt2)       = CO.Nuc.Circularity;
         Seg.Nuc.Hu_mom1(cnt:cnt2)           = CO.Nuc.Hu_mom1;
         Seg.Nuc.Hu_mom2(cnt:cnt2)           = CO.Nuc.Hu_mom2;
@@ -189,7 +189,7 @@ for i = 1:size(seg_file,1)
         Seg.Nuc.Min_Gradient_Full(cnt:cnt2) = CO.Nuc.Min_Gradient_Full;
         Seg.Nuc.Max_Gradient_Full(cnt:cnt2) = CO.Nuc.Max_Gradient_Full;
         Seg.Nuc.Std_Gradient_Full(cnt:cnt2) = CO.Nuc.Std_Gradient_Full;
-        Seg.Mean_Dist_to_closest_objs(cnt:cnt2) = CO.Nuc.Mean_Dist_to_closest_objs;
+        Seg.Nuc.Mean_Dist_to_closest_objs(cnt:cnt2) = CO.Nuc.Mean_Dist_to_closest_objs;
         %Classification
         Seg.class.nucleus(cnt:cnt2)         = CO.class.nucleus;
         Seg.class.apoptotic(cnt:cnt2)       = CO.class.apoptotic;
@@ -264,7 +264,7 @@ for i = 1:size(seg_file,1)
         Seg.Nuc.EquivDiameter(cnt)     = 0;
         Seg.Nuc.MajorAxisLength(cnt)   = 0;
         Seg.Nuc.MinorAxisLength(cnt)   = 0;
-        Seg.Nuc.Background(i)          = 0;
+        Seg.NucBackground(i)          = 0;
         Seg.Nuc.Circularity(cnt)       = 0;
         Seg.Nuc.Hu_mom1(cnt)           = 0;
         Seg.Nuc.Hu_mom2(cnt)           = 0;
@@ -288,7 +288,7 @@ for i = 1:size(seg_file,1)
         Seg.Nuc.Min_Gradient_Full(cnt) = 0;
         Seg.Nuc.Max_Gradient_Full(cnt) = 0;
         Seg.Nuc.Std_Gradient_Full(cnt) = 0;
-        Seg.Mean_Dist_to_closest_objs(cnt) = 0;
+        Seg.Nuc.Mean_Dist_to_closest_objs(cnt) = 0;
         %Classification
         Seg.class.nucleus(cnt)         = 0;
         Seg.class.apoptotic(cnt)       = 0;
@@ -360,7 +360,7 @@ tempMat_CellEvent = [tempMat_CellEvent, array2table([Seg.ImNum,Seg.cellId,Seg.xp
 
 tempMat_CellEvent = [tempMat_CellEvent, array2table([Seg.Nuc.Circularity,Seg.Nuc.Hu_mom1,Seg.Nuc.Hu_mom2,Seg.Nuc.Hu_mom3,Seg.Nuc.Hu_mom4,...
     Seg.Nuc.Hu_mom5,Seg.Nuc.Hu_mom6,Seg.Nuc.Hu_mom7,Seg.Nuc.Extension,Seg.Nuc.Dispersion,Seg.Nuc.Elongation,...
-    Seg.Mean_Dist_to_closest_objs,Seg.Nuc.Mean_Pixel_Dist,Seg.Nuc.Max_Pixel_Dist,Seg.Nuc.Min_Pixel_Dist,...
+    Seg.Nuc.Mean_Dist_to_closest_objs,Seg.Nuc.Mean_Pixel_Dist,Seg.Nuc.Max_Pixel_Dist,Seg.Nuc.Min_Pixel_Dist,...
     Seg.Nuc.Std_Pixel_Dist,Seg.Nuc.Mean_Intensity,Seg.Nuc.Min_Intensity,Seg.Nuc.Max_Intensity,Seg.Nuc.Std_Intensity,...
     Seg.Nuc.Mean_Gradient_Full,Seg.Nuc.Min_Gradient_Full,Seg.Nuc.Max_Gradient_Full,Seg.Nuc.Std_Gradient_Full,...
     Seg.Nuc.ConvexArea,Seg.Nuc.Solidity,Seg.Nuc.MajorAxisLength,Seg.Nuc.MinorAxisLength,Seg.Nuc.EquivDiameter,Seg.Nuc.EulerNumber],...
@@ -393,7 +393,7 @@ Condition = {'FileName','ImageNumber','Year','Month','Day','Hour','Min','Row','C
 tempMat_ImEvents = cell2table(cellstr(Seg.FileNameSingle),'VariableNames',Condition(1));
 tempMat_ImEvents = [tempMat_ImEvents, array2table([Seg.ImNumSingle,Seg.yearFile,Seg.monthFile,Seg.dayFile,Seg.hourFile,Seg.minFile],'VariableNames',{Condition{2:7}})]; 
 tempMat_ImEvents = [tempMat_ImEvents, cell2table([cellstr(Seg.RowSingle),cellstr(Seg.ColSingle)],'VariableNames',{Condition{8:9}})];
-tempMat_ImEvents = [tempMat_ImEvents, array2table([Seg.cellcount,Seg.Nuc.Background],'VariableNames',{Condition{10:11}})];
+tempMat_ImEvents = [tempMat_ImEvents, array2table([Seg.cellcount,Seg.NucBackground],'VariableNames',{Condition{10:11}})];
 for q = 1:handles.numCh
     chnm = ['CH_' num2str(q)];
     tempMat_ImEvents = [tempMat_ImEvents, array2table([Seg.(chnm).Background],'VariableNames', {[chnm '_Background']})];
@@ -421,7 +421,7 @@ else
 end
 writetable(tempMat_SegParameters,[handles.expDir filesep 'Processing Parameters.csv']);
 
-save([handles.expDir filesep 'Compiled Segmentation Results.mat'],'Seg','tempMat_SegParameters','tempMat_ImEvents','tempMat_CellEvent')
+save([handles.expDir filesep 'Compiled Segmentation Results.mat'],'Seg','tempMat_SegParameters','tempMat_ImEvents','tempMat_CellEvent','handles')
 
 close(hf)
 end

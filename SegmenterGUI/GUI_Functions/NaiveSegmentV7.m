@@ -451,7 +451,7 @@ end
 %For each channel save information into the structure
 CO.Centroid         = Centroid;
 CO.cellId           = 1:size(p,1);
-CO.Nuc.Background   = median(tempIm(Nuc_label==0));
+CO.NucBackground   = median(tempIm(Nuc_label==0));
 CO.Nuc.Area         = Area;
 CO.Nuc.Perimeter    = Perimeter;
 CO.Nuc.Solidity     = Solidity;
@@ -463,7 +463,6 @@ CO.class.apoptotic  = zeros(length(Edge),1);
 CO.class.mitotic    = zeros(length(Edge),1);
 CO.class.debris     = zeros(length(Edge),1);
         
-CO.Nuc.cellId           = 1:size(p,1);
 CO.Nuc.MajorAxisLength  = MajorAxisLength;
 CO.Nuc.MinorAxisLength  = MinorAxisLength;
 CO.Nuc.EquivDiameter    = EquivDiameter;

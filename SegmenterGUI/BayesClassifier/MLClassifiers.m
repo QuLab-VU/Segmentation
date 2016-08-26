@@ -1,13 +1,12 @@
 function [] = MLClassifiers(option,handles)
-    if option == 1
-        [classMat,classLabel,im_cell_id] = CreateClassifier(handles,[],[],cell(0));
+    if option == 1  
+                save([handles.expDir filesep 'Handles.mat'],'handles')
+
+        [classMat,classLabel,im_cell_id] = CreateClassifier(handles,array2table(zeros(1,32)),cell(0),[0,0]);
         %Now Build a classifier
         
-        
         msgbox('Good One!')
-        %Save the results
-        str = sprintf('%s/Classifier_%s.mat',handles.expDir,date);
-        save(str,'classMat','classLabel','im_cell_id')
+        
     elseif option == 2
         %Add to existing classifier
         [filename, pathname] = uigetfile('*.mat','Select Classifier')
@@ -29,3 +28,14 @@ function [] = MLClassifiers(option,handles)
     end
     
     %Now 
+    
+    
+    
+    
+
+%http://www.mathworks.com/help/stats/fitcnb.html
+%http://www.mathworks.com/help/stats/classificationnaivebayes-class.html
+
+
+
+

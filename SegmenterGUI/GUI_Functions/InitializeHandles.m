@@ -34,6 +34,7 @@ handles.thresh_based_bin = get(findobj('Tag','checkbox10'),'Value');
 %Nuclei Directory (N)
 %A lot of messy code to set up the file structure depending on whether it
 %is the bd pathway or cellavista instrument.
+well_cnt = 1;
 if handles.bd_pathway
     %Set up structure with the filenames of the images to be segmented
     %Nuclei Directory (N)
@@ -43,7 +44,7 @@ if handles.bd_pathway
         if ~isempty(idx)
             [temp] = dir([handles.expDir filesep filenms(i).name '/*' handles.imExt]);
             if isempty(NUC.filnms)
-                NUC.filnms = strcat(handles.expDir, '/', filenms(i).name, '/', {temp.name});
+                NUC.filnms = strcat(handles.expDir, '/', filenms(i).name, '/', {temp(im_num).name});
             else
                 NUC.filnms = {NUC.filnms strcat(handles.expDir, '/', filenms(i).name, '/', {temp.name})};
             end
@@ -57,7 +58,7 @@ if handles.bd_pathway
     if (handles.cidrecorrect)
        NUC.CIDREmodel.v = csvread([handles.cidreDir filesep 'cidre_model_v.csv']);
        NUC.CIDREmodel.z = csvread([handles.cidreDir filesep 'cidre_model_z.csv']);
-    end
+    end  
     handles.NUC = NUC;
 
     for i = 1:handles.numCh
