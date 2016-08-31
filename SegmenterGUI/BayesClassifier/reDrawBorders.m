@@ -1,9 +1,25 @@
-function [classMat,im_cell_id,classLabel] = reDrawBorders(label,x,y,CO,idx,ax1,T)
+function [] = reDrawBorders(label,x,y,CO,idx,ax1,T)
+global classMat
+global classLabel
+global im_cell_id
+
 [~, m_id] = min(sqrt((CO.Centroid(:,1)-x).^2+(CO.Centroid(:,2)-y).^2));
+
+[loc, id] = ismember([idx,CO.cellId(m_id)],im_cell_id,'rows');
+if loc == 0
+    classMat(end+1,:)         = T(m_id,:);
+    im_cell_id(end+1,:)     = [idx,CO.cellId(m_id)];
+    classLabel{end+1}       = label;
+else
+    classMat(id,:)          = T(m_id,:);
+    im_cell_id(id,:)        = [idx,CO.cellId(m_id)];
+    classLabel{id}          = label;
+end
+
 axes(ax1)
 imtemp = CO.Nuc_label == CO.cellId(m_id);
-imtemp = imdilate(imtemp,strel('disk',2));
 imtemp = bwperim(imtemp);
+imtemp = imdilate(imtemp,strel('disk',2));
 [i,j] = ind2sub(size(imtemp),find(imtemp));
 hold on
 switch label
@@ -19,13 +35,12 @@ switch label
         gscatter(j,i,[],'b','.',2);
     case 'junk'
         gscatter(j,i,[],'y','.',2);
+    case 'newborn'
+        gscatter(j,i,[],[161, 202, 241]./255,'.',2) %Baby blue
 end
 set(gca,'XLabel',[],'YLabel',[])
 
-classMat = T(m_id,:);
-       
-im_cell_id    = [idx,CO.cellId(m_id)];
-classLabel    = label;
+
 
 
 

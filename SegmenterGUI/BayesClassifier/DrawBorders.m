@@ -1,4 +1,8 @@
-function [T,CO] = DrawBorders(handles,im_idx,seg_file,im_cell_id,classLabel,ax1,CO,contrast)
+function [T,CO] = DrawBorders(handles,im_idx,seg_file,ax1,CO,contrast)
+global classMat
+global classLabel
+global im_cell_id
+
 axes(ax1);cla;
 %Load the segmentation structure
 load([handles.expDir filesep 'Segmented/' seg_file(im_idx).name]);
@@ -17,8 +21,8 @@ for j = 1:length(properties)
     [y,x] = ind2sub(size(im),properties(j).PixelIdxList);
     y = y-properties(j).BoundingBox(2)+.5; x = x-properties(j).BoundingBox(1)+.5;
     tempIm(sub2ind(size(tempIm),y,x)) = 1;
-    tempIm = imdilate(tempIm,strel('disk',2));
     BW = bwperim(tempIm);
+    BW = imdilate(tempIm,strel('disk',2));
     [y,x] = find(BW);
     x = x + properties(j).BoundingBox(1)-.5;y = y+properties(j).BoundingBox(2)-.5;
     [loc, id] = ismember([im_idx,j],im_cell_id,'rows');
@@ -36,6 +40,8 @@ for j = 1:length(properties)
                 gscatter(x,y,[],'b','.',2);
             case 'junk'
                 gscatter(x,y,[],'y','.',4);
+            case 'newborn'
+                gscatter(x,y,[],[161, 202, 241]./255,'.',2) %Baby blue
         end
     else
         gscatter(x,y,[],'w','.',2);

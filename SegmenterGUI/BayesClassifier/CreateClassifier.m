@@ -1,6 +1,11 @@
-function [classMat,classLabel,im_cell_id] = CreateClassifier(handles,classMat,classLabel,im_cell_id)
+function CreateClassifier(handles)
+global classMat
+global classLabel
+global im_cell_id
+
 num_apo     = 0;num_nuc     = 0;num_over    = 0;
 num_under   = 0;num_mito    = 0;num_junk    = 0;
+num_newborn = 0;
 im_idx      = 1;contrast = 1;
 
 seg_file = dir([handles.expDir filesep 'Segmented/*.mat']);
@@ -26,8 +31,8 @@ if height(classMat)==1
     classMat.Properties.VariableNames = T.Properties.VariableNames;
 end
 %Draw initial image
-[T,CO] = DrawBorders(handles,1,seg_file,im_cell_id,classLabel,ax1,CO,contrast);
-WriteLegend(ax2,num_over,num_under,num_mito,num_nuc,num_apo)
+[T,CO] = DrawBorders(handles,1,seg_file,ax1,CO,contrast);
+WriteLegend(ax2,num_over,num_under,num_mito,num_nuc,num_apo,num_newborn)
 while 1
     axes(ax1)
     [i,j,input] = ginputc(1,'Color','w','LineWidth',2);
@@ -36,52 +41,49 @@ while 1
             break
         case 106
             num_junk = num_junk + 1;
-            [classMat(cnt,:),im_cell_id(cnt,:),classLabel{cnt}] = reDrawBorders('junk',i,j,CO,im_idx,ax1,T);
-            WriteLegend(ax2,num_over,num_under,num_mito,num_nuc,num_apo)
-            cnt = cnt + 1;
+            reDrawBorders('junk',i,j,CO,im_idx,ax1,T);
+            WriteLegend(ax2,num_over,num_under,num_mito,num_nuc,num_apo,num_newborn)
         case 110 %n for Nucleus %Left mouse click for nucleus
             num_nuc = num_nuc+1;
-            [classMat(cnt,:),im_cell_id(cnt,:),classLabel{cnt}] = reDrawBorders('nuc',i,j,CO,im_idx,ax1,T);
-            WriteLegend(ax2,num_over,num_under,num_mito,num_nuc,num_apo)
-            cnt = cnt + 1;
+            reDrawBorders('nuc',i,j,CO,im_idx,ax1,T);
+            WriteLegend(ax2,num_over,num_under,num_mito,num_nuc,num_apo,num_newborn)
         case 109 %m for Mitotic Cell
             num_mito = num_mito+1;
-            [classMat(cnt,:),im_cell_id(cnt,:),classLabel{cnt}] = reDrawBorders('mito',i,j,CO,im_idx,ax1,T);
-            WriteLegend(ax2,num_over,num_under,num_mito,num_nuc,num_apo)
-            cnt = cnt + 1;
+            reDrawBorders('mito',i,j,CO,im_idx,ax1,T);
+            WriteLegend(ax2,num_over,num_under,num_mito,num_nuc,num_apo,num_newborn)
+        case 98 %b for newBorn cell
+            num_newborn = num_newborn+1;
+            reDrawBorders('newborn',i,j,CO,im_idx,ax1,T);
+            WriteLegend(ax2,num_over,num_under,num_mito,num_nuc,num_apo,num_newborn)
         case 97 %a for Apoptotic cell
             num_apo = num_apo+1;
-            [classMat(cnt,:),im_cell_id(cnt,:),classLabel{cnt}] = reDrawBorders('apo',i,j,CO,im_idx,ax1,T);
-            WriteLegend(ax2,num_over,num_under,num_mito,num_nuc,num_apo)
-            cnt = cnt + 1;
+            reDrawBorders('apo',i,j,CO,im_idx,ax1,T);
+            WriteLegend(ax2,num_over,num_under,num_mito,num_nuc,num_apo,num_newborn)
         case 111 %o for Over Segmented
             num_over = num_over+1;
-            [classMat(cnt,:),im_cell_id(cnt,:),classLabel{cnt}] = reDrawBorders('over',i,j,CO,im_idx,ax1,T);
-            WriteLegend(ax2,num_over,num_under,num_mito,num_nuc,num_apo)
-            cnt = cnt + 1;
+            reDrawBorders('over',i,j,CO,im_idx,ax1,T);
+            WriteLegend(ax2,num_over,num_under,num_mito,num_nuc,num_apo,num_newborn)
         case 117 %u for Under Segmented
             num_under = num_under+1;
-            [classMat(cnt,:),im_cell_id(cnt,:),classLabel{cnt}] = reDrawBorders('under',i,j,CO,im_idx,ax1,T);
-            WriteLegend(ax2,num_over,num_under,num_mito,num_nuc,num_apo)
-            cnt = cnt + 1;
+            reDrawBorders('under',i,j,CO,im_idx,ax1,T);
+            WriteLegend(ax2,num_over,num_under,num_mito,num_nuc,num_apo,num_newborn)
         case 29 %Right arrow for next image
             im_idx = im_idx + 1;
-            [T,CO] = DrawBorders(handles,im_idx,seg_file,im_cell_id,classLabel,ax1,CO,contrast);
-            WriteLegend(ax2,num_over,num_under,num_mito,num_nuc,num_apo)
-            SaveClassifier(classMat,classLabel,im_cell_id,handles);
+            [T,CO] = DrawBorders(handles,im_idx,seg_file,ax1,CO,contrast);
+            WriteLegend(ax2,num_over,num_under,num_mito,num_nuc,num_apo,num_newborn)
+            SaveClassifier(handles);
         case 115 %s for skip Skip 10 images
             im_idx = im_idx + 10;
-            [T,CO] = DrawBorders(handles,im_idx,seg_file,im_cell_id,classLabel,ax1,CO,contrast);
-            WriteLegend(ax2,num_over,num_under,num_mito,num_nuc,num_apo)
-            SaveClassifier(classMat,classLabel,im_cell_id,handles);
+            [T,CO] = DrawBorders(handles,im_idx,seg_file,ax1,CO,contrast);
+            WriteLegend(ax2,num_over,num_under,num_mito,num_nuc,num_apo,num_newborn)
+            SaveClassifier(handles);
         case 28 %left arrow for Previous image
             im_idx = im_idx - 1;
-            [T,CO] = DrawBorders(handles,im_idx,seg_file,im_cell_id,classLabel,ax1,CO,contrast);
-            WriteLegend(ax2,num_over,num_under,num_mito,num_nuc,num_apo)
-            SaveClassifier(classMat,classLabel,im_cell_id,handles);
+            [T,CO] = DrawBorders(handles,im_idx,seg_file,ax1,CO,contrast);
+            WriteLegend(ax2,num_over,num_under,num_mito,num_nuc,num_apo,num_newborn)
+            SaveClassifier(handles);
         case 100 %d for Delete previous selection
-            cnt = cnt - 1;
-            switch classLabel{cnt}
+            switch classLabel{end}
                 case 'apo'
                     num_apo     = num_apo-1;
                 case 'mito'
@@ -94,12 +96,14 @@ while 1
                     num_under   = num_under-1;
                 case 'junk'
                     num_junk    = num_junk-1;
+                case 'newborn'
+                    num_newborn = num_newborn-1;
             end
-            classMat(cnt,:)     = [];
-            classLabel{cnt}     = [];
-            im_cell_id(cnt,:)   = [];
-            [T,CO] = DrawBorders(handles,im_idx,seg_file,im_cell_id,classLabel,ax1,CO,contrast);
-            WriteLegend(ax2,num_over,num_under,num_mito,num_nuc,num_apo)
+            classMat(end,:)     = [];
+            classLabel{end}     = [];
+            im_cell_id(end,:)   = [];
+            [T,CO] = DrawBorders(handles,im_idx,seg_file,ax1,CO,contrast);
+            WriteLegend(ax2,num_over,num_under,num_mito,num_nuc,num_apo,num_newborn)
         case 99  %c for Bring up contrast tool
             if contrast < .1
                 contrast = contrast + .01;
@@ -108,8 +112,8 @@ while 1
             else
                 contrast = contrast + 1;
             end
-            [T,CO] = DrawBorders(handles,im_idx,seg_file,im_cell_id,classLabel,ax1,CO,contrast);
-            WriteLegend(ax2,num_over,num_under,num_mito,num_nuc,num_apo)
+            [T,CO] = DrawBorders(handles,im_idx,seg_file,ax1,CO,contrast);
+            WriteLegend(ax2,num_over,num_under,num_mito,num_nuc,num_apo,num_newborn)
         case 120 %x decrease contrast
             if contrast == .01
                 msgbox('Minumum Contrast Achieved')
@@ -121,17 +125,17 @@ while 1
             else
                 contrast = contrast - 1;
             end
-            [T,CO] = DrawBorders(handles,im_idx,seg_file,im_cell_id,classLabel,ax1,CO,contrast);
-            WriteLegend(ax2,num_over,num_under,num_mito,num_nuc,num_apo)
+            [T,CO] = DrawBorders(handles,im_idx,seg_file,ax1,CO,contrast);
+            WriteLegend(ax2,num_over,num_under,num_mito,num_nuc,num_apo,num_newborn)
         case 116 %t for toggle between current and next image
             idx_temp = im_idx + 1;
-            [~] = DrawBorders(handles,idx_temp,seg_file,im_cell_id,classLabel,ax1,CO,contrast);
+            [~] = DrawBorders(handles,idx_temp,seg_file,ax1,CO,contrast);
             waitforbuttonpress()
-            [T,CO] = DrawBorders(handles,im_idx,seg_file,im_cell_id,classLabel,ax1,CO,contrast);
+            [T,CO] = DrawBorders(handles,im_idx,seg_file,ax1,CO,contrast);
     end
 end
 %One final save
-SaveClassifier(classMat,classLabel,im_cell_id,handles)
+SaveClassifier(handles)
 
 
 
