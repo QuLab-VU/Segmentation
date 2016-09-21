@@ -59,7 +59,7 @@ bd_pathway = handles.bd_pathway;
 thresh_based_bin = handles.thresh_based_bin;
 %Threshold binarization
 back_thresh = handles.back_thresh;
-
+BFnuc = handles.BFnuc;
 
 filnames = dir([expDir '/Segmented']); temp = [];
 if length(filnames)>2
@@ -80,10 +80,10 @@ for rand = 1:size(unfinishedImages,2)
 
     im_info = imfinfo(char(NUC.filnms(i)),imExt);
     %Send to segmenter code
-    [CO,Im_array] = NaiveSegmentV7(cidrecorrect,NucnumLevel,CytonumLevel,surface_segment,...
+    [CO,Im_array] = NaiveSegmentV8(cidrecorrect,NucnumLevel,CytonumLevel,surface_segment,...
     nuclear_segment,noise_disk,nuc_noise_disk,nuclear_segment_factor,surface_segment_factor,...
     smoothing_factor,NucSegHeight,numCh,NUC,Cyto,i,background_corr,CorrIm_file,bd_pathway,...
-    back_thresh,thresh_based_bin,im_info)
+    back_thresh,thresh_based_bin,im_info,BFnuc);
     %Save segmentation in a directory called segmented
     %Call a function to be able to save result
     save([expDir '/Segmented/' rw '_' cl '_' num2str(i) '.mat'], 'CO')

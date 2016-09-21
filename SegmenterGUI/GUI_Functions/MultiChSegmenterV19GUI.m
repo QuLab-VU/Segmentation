@@ -1,4 +1,4 @@
-function [] = MultiChSegmenterV18GUI(handles)
+function [] = MultiChSegmenterV19GUI(handles)
 
 % Multi Channel Cell Segmentation with channel correction.  
 %%Christian Meyer 12.30.15
@@ -61,6 +61,8 @@ bd_pathway              = handles.bd_pathway;
 thresh_based_bin        = handles.thresh_based_bin;
 %Threshold binarization
 back_thresh             = handles.back_thresh;
+%Is the nucleus Bright Field?
+BFnuc                   = handles.BFnuc;
 
 %Make a directory for the segemented files
 mkdir([handles.expDir filesep 'Segmented'])
@@ -98,10 +100,10 @@ parfor i = 1:size(NUC.filnms,2)
     Par.tic;
     im_info = imfinfo(char(NUC.filnms(i)));
     %Send to segmenter code
-    [CO,Im_array] = NaiveSegmentV7(cidrecorrect,NucnumLevel,CytonumLevel,surface_segment,...
+    [CO,Im_array] = NaiveSegmentV8(cidrecorrect,NucnumLevel,CytonumLevel,surface_segment,...
     nuclear_segment,noise_disk,nuc_noise_disk,nuclear_segment_factor,surface_segment_factor,...
     smoothing_factor,NucSegHeight,numCh,NUC,Cyto,i,background_corr,CorrIm_file,bd_pathway,...
-    back_thresh,thresh_based_bin,im_info);
+    back_thresh,thresh_based_bin,im_info,BFnuc);
     
     totCell(i) = CO.cellCount
     %Save segmentation in a directory called segmented

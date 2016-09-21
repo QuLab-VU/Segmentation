@@ -1,40 +1,55 @@
 function [handles] = InitializeHandles_VDIPRR(handles)
+%This function reads the segmentation parameters from each widget into a
+%structure passed to the segmentation functions called handles
 handles.imExt = get(findobj('Tag','edit6'),'String');
 handles.numCh = str2double(get(findobj('Tag','edit4'),'String'));
 handles.NucnumLevel = str2double(get(findobj('Tag','edit11'),'String'));
 handles.Parallel = get(findobj('Tag','checkbox6'),'Value');
 
+%Which background correction method?
+switch handles.BackCorrMethod
+    case 'RollBallFilter'
+        handles.rollfilter = str2double(get(findobj('Tag','edit18'),'String'));
+    case 'ConstThresh'
+        handles.back_thresh = get(findobj('Tag','slider4'),'Value');
+    case 'ImageSub'
+        if isempty(handles.CorrIm_file)
+            msgbox('Error: No Control Image Selected')
+            return
+        end
+    case 'CIDRE'
+        if isempty(handles.cidreDir)
+            msgbox('Error: No CIDRE Directory Selected')
+            return
+        end        
+        handles.CIDREmodel.v = csvread([handles.cidreDir filesep 'cidre_model_v.csv']);
+        handles.CIDREmodel.z = csvread([handles.cidreDir filesep 'cidre_model_z.csv']);
+end
+
+
 handles.smoothing_factor = str2double(get(findobj('Tag','edit10'),'String'));
 handles.nuc_noise_disk = str2double(get(findobj('Tag','edit15'),'String'));
-handles.cidrecorrect = (get(findobj('Tag','checkbox1'),'Value'));
-if isempty(handles.CorrIm_file)
-    msgbox('Error: No Control Image Selected')
-    return
-end
-handles.background_corr = get(findobj('Tag','checkbox9'),'Value');
-handles.back_thresh = get(findobj('Tag','slider4'),'Value');
-handles.thresh_based_bin = get(findobj('Tag','checkbox10'),'Value');
 
 mkdir([handles.expDir filesep 'Results']);
 %Set up structure with the filenames of the images to be segmented
 %Nuclei Directory (N)
-%A lot of messy code to set up the file structure depending on whether it
-%is the bd pathway or cellavista instrument.
+%A lot of messy code to set up the file structure as matlab reorders images
+%sometimes.
 str = sprintf('*%s',handles.imExt);
 im_filnm = dir([handles.expDir filesep str]);
 to_remove = zeros(length(im_filnm),1);
 for j = 1:length(im_filnm)
-    if ~isempty(findstr(im_filnm(j).name,'Thumb_'))
+    if ~isempty(findstr(im_filnm(j).name,'Thumb_'))  %This is to remove all the thumbnail images in the folder from list to segment
         to_remove(j) = 1;
     end
 end
 im_filnm = im_filnm(to_remove~=1);
+%This corrects for matlabs ordering where 100.jpg comes before 9.jpg
 to_order = [];
 for j = 1:length(im_filnm)
         temp_id = strfind(im_filnm(j).name,'.');
         to_order(end+1) = str2double(im_filnm(j).name(1:temp_id-1));
 end
-im_filnm = im_filnm(to_remove~=1);
 [~, reorder_id] = sort(to_order,'ascend');
 im_filnm = im_filnm(reorder_id);
 for j = 1:length(im_filnm)
@@ -42,8 +57,3 @@ for j = 1:length(im_filnm)
 end
 handles.im_file = im_filnm;
 
- 
-if (handles.cidrecorrect)
-   handles.CIDREmodel.v = csvread([handles.cidreDir filesep 'cidre_model_v.csv']);
-   handles.CIDREmodel.z = csvread([handles.cidreDir filesep 'cidre_model_z.csv']);
-end  

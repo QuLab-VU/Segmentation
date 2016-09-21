@@ -36,8 +36,7 @@
 ehthumbs.db
 Thumbs.db
 
-# Images and Videos #
-#####################
+
 # Compiled source #
 ###################
 *.com
@@ -76,8 +75,6 @@ Thumbs.db
 ehthumbs.db
 Thumbs.db
 
-# Images and Video #
-####################
 
 # Compiled source #
 ###################
@@ -182,3 +179,12 @@ Thumbs.db
 # Temporary Files #
 ###################
 *~
+
+# MATLAB OUTPUT AND CSV #
+#########################
+*.mat
+*.csv
+*.tab
+*.output
+*.txt
+

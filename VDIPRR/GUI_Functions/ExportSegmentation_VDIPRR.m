@@ -5,8 +5,12 @@ function [handles] = ExportSegmentation_VDIPRR(handles)
 %Handles.mat contains handle to the segmenter and all the parameters
 %Processing Parameters.csv contains all the segmentation parameters used
     
-seg_file = dir([handles.expDir filesep 'Segmented/*.mat']);
-fid = fopen([handles.expDir filesep 'Segmented/NumDetect_Im.txt'], 'r');
+%Open resulting segmentation
+seg_file = dir([handles.expDir filesep 'Segmented' filesep '*.mat']);
+%Open a text file that was written as the segmentation was being run that
+%counted the number of cells in each image to allow for preallocating the
+%total number of cells
+fid = fopen([handles.expDir filesep 'Segmented' filesep 'NumDetect_Im.txt'], 'r');
 if fid < 0
     error('Cannot open file with cell count'); 
 end
@@ -15,6 +19,7 @@ handles.totCell = double(data{2});
 handles.totIm = double(data{4});
 mkdir([handles.expDir filesep 'Results']);
 
+%Reorder the files. Necessary because of matlabs strange numbering scheme
 to_order = [];
 for j = 1:length(seg_file)
         temp_id = strfind(seg_file(j).name,'.');
@@ -23,8 +28,9 @@ end
 [~, reorder_id] = sort(to_order,'ascend');
 seg_file = seg_file(reorder_id);
 
+%Creaste the two tables
 for i = 1:length(seg_file)
-    load([handles.expDir filesep 'Segmented/' seg_file(i).name])
+    load([handles.expDir filesep 'Segmented' filesep seg_file(i).name])
     if i == 1
         T_CellData  = struct2table(CO.CData);
         T_ImData    = struct2table(CO.ImData);
@@ -34,7 +40,7 @@ for i = 1:length(seg_file)
     end
 end
 
-%Count FUCCI+ cells
+%Count FUCCI+ cells using a gaussian mixed model
 GM = fitgmdist(T_CellData.CytoInt,2);
 class = cluster(GM,T_CellData.CytoInt);
 [~, id] = max(GM.mu);
@@ -75,6 +81,7 @@ end
 % figure()
 % plot(mappedX(:,1),mappedX(:,2),'.')
 
+%Write tables
 writetable(T_CellData,[handles.expDir filesep 'Results' filesep  'Cell_Events.csv'])
 writetable(T_ImData, [handles.expDir filesep 'Results' filesep 'Image_Events.csv'])
 
@@ -86,16 +93,19 @@ handles.smoothing_factor],'VariableNames',ImageParameter);
 tempMat_SegParameters.Experiment_Directory = handles.masterDir;
 tempMat_SegParameters.Image_Ext = handles.imExt;
 tempMat_SegParameters.Date = date;
-if handles.cidrecorrect
-    tempMat_SegParameters.CorrectionMethod = 'CIDRE';
-    tempMat_SegParameters.Cidre_Directory = handles.cidreDir;
-elseif handles.background_corr
-    tempMat_SegParameters.CorrectionMethod = 'Control_image';
-    tempMat_SegParameters.ControlIm_Directory = handles.CorrIm_File;
-elseif handles.thresh_based_bin
-    tempMat_SegParameters.CorrectionMethod = 'Threshold';
-    tempMat_SegParameters.Threshold_Value = handles.back_thresh;
+tempMat_SegParameters.BackCorrMethod = handles.BackCorrMethod;
+%Correct Image:
+switch handles.BackCorrMethod
+    case 'CIDRE'
+        tempMat_SegParameters.Cidre_Directory = handles.cidreDir;
+    case 'RollBallFilter'
+        tempMat_SegParameters.RollingFilter = handles.rollfilter;
+    case 'ConstThresh'
+        tempMat_SegParameters.ConstantThresh = handles.back_thresh;
+    case 'ImageSub'
+        tempMat_SegParameters.ImageSubFile = handles.CorrIm_File;
 end
+
 writetable(tempMat_SegParameters,[handles.expDir filesep 'Results' filesep 'Processing Parameters.csv']);
 %save([handles.expDir filesep 'Results' filesep 'Compiled Segmentation Results.mat'],'T_CellData','T_ImData','handles')
 end

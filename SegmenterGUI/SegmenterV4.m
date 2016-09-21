@@ -22,7 +22,7 @@ function varargout = SegmenterV4(varargin)
 
 % Edit the above text to modify the response to help SegmenterV4
 
-% Last Modified by GUIDE v2.5 18-Aug-2016 11:28:52
+% Last Modified by GUIDE v2.5 14-Sep-2016 12:04:11
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -109,6 +109,8 @@ handles.viewNuc = 0; %Default shows cytoplasm segmentation.
 %For constant thresholding
 handles.thresh_based_bin = 0;
 handles.back_thresh = 0;
+%Is the nuclear Channel BrightField?
+handles.BFnuc = 0;
 
 handles; %Show handles in command window after starting up
 % Update handles structure
@@ -138,7 +140,7 @@ function pushbutton1_Callback(hObject, eventdata, handles)
 %current value of every field
 [handles] = InitializeHandles(handles);
 if handles.Parallel
-   MultiChSegmenterV18GUI(handles)
+   MultiChSegmenterV19GUI(handles)
 else
    MultiChSegmentNoParallel(handles)
 end
@@ -547,7 +549,7 @@ if handles.imNum == 0
     end
     set(findobj('Tag','pushbutton7'),'Visible','on')
 end
-segmenterTestGUIv4(handles)
+segmenterTestGUIv5(handles)
 guidata(hObject, handles);
 
 
@@ -942,3 +944,12 @@ function pushbutton15_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 MLClassifiers(2,handles);
 guidata(hObject,handles)
+
+
+% --- Executes on button press in checkbox11.
+function checkbox11_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox11 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox11

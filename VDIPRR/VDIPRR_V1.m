@@ -22,7 +22,7 @@ function varargout = VDIPRR_V1(varargin)
 
 % Edit the above text to modify the response to help VDIPRR_V1
 
-% Last Modified by GUIDE v2.5 30-Aug-2016 23:25:38
+% Last Modified by GUIDE v2.5 14-Sep-2016 11:37:40
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -53,6 +53,7 @@ function VDIPRR_V1_OpeningFcn(hObject, eventdata, handles, varargin)
 % varargin   command line arguments to VDIPRR_V1 (see VARARGIN)
 
 % Choose default command line output for VDIPRR_V1
+addpath('GUI_Functions','BayesClassifier')
 handles.axes1
 handles.output = hObject;
 %Initialize the default settings.  If you wish to change them you must
@@ -62,30 +63,26 @@ handles.output = hObject;
 handles.expDir  = 'Desktop';
 handles.masterDir = 'Desktop';
 %Image Extension
-handles.imExt = '.tiff';
+handles.imExt = '.tif';
 %Number of levels to use in Otsu's thresholding for the nuclear stain
 handles.NucnumLevel = 3;
 %Size of disk applied to nuclear channel to filter out noise
-handles.nuc_noise_disk = 5;
+handles.nuc_noise_disk = 7;
 %Factor to smooth the segementation by dilating and eroding the binarized
 %image
-handles.smoothing_factor = 5; 
-%Use cidre correction method for correcting vinetting
-handles.cidrecorrect = 0;
+handles.smoothing_factor = 1; 
 %Clear the border cells?
 handles.cl_border = 1;
 %Keep track of the image number
 handles.imNum = 1;
 %Value to assist watershed algorithm in splitting nuclei. See lines 91-95
 %in NaiveSegmentv2
-handles.NucSegHeight = 3;
+handles.NucSegHeight = 1;
 %Directory of the Cidre map
-handles.cidreDir = '/home/xnmeyer/Documents/Lab/TNBC_Project/Experiments/Models_CIDRE_BaysSeg/20X_GREEN_2048/';
+handles.cidreDir = 'CIDRE_correction_maps' ;
 %If using a control image to correct for illumination
-handles.background_corr = 0;
 handles.CorrIm_file = 'DsRed-Control.tif';
 %For constant thresholding
-handles.thresh_based_bin = 0;
 handles.back_thresh = 0;
 %Constrast of image
 handles.contrast = 1;
@@ -119,27 +116,44 @@ function pushbutton1_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 %Sort out segmentation parameters using the findobj() function to find the
 %current value of every field
+
+%Find if this is a batch job..
 handles.BatchExp = get(findobj('Tag','checkbox11'),'Value');
-save(['~' filesep 'Handles.mat'],'handles')
-if handles.BatchExp
-    All_Exp = dir(handles.expDir);
-    for i = 3:length(All_Exp)
-        try
-        if All_Exp(i).isdir
-            handles.expDir = [handles.masterDir filesep All_Exp(i).name];
-            [handles] = InitializeHandles_VDIPRR(handles);
-            if handles.Parallel
-               MultiChSegmenter_Parallel_VDIPRR(handles)
-            else
-               MultiChSegmentNoParallel_VDIPRR(handles)
+%If you want the handles structure to be saved in your home directory
+%Makes it easy to find errors in the code.
+%save(['~' filesep 'Handles.mat'],'handles')
+if handles.BatchExp %If a batch experiment
+    All_Exp = dir(handles.expDir); %Find all the files
+    t = zeros(length(All_Exp),1);
+    wb = waitbar(0,'Estimated Time Remaining (hrs)');
+    for i = 3:length(All_Exp) %Ignore the . and .. directory
+        tic
+        try %If encounters an error it will keep processing and write a textfile with the failed directories.
+            if All_Exp(i).isdir %Only run if it is a directory
+                handles.expDir = [handles.masterDir filesep All_Exp(i).name];
+                %Initialize the handles by reading parameters from each
+                %widget
+                [handles] = InitializeHandles_VDIPRR(handles);
+                if handles.Parallel
+                   MultiChSegmenter_Parallel_VDIPRR(handles)
+                else
+                   MultiChSegmentNoParallel_VDIPRR(handles)
+                end
+                %Export the results of the segmentation.
+                h=msgbox('Exporting Now...');
+                ExportSegmentation_VDIPRR(handles)
+                try
+                    close(h)
+                end
             end
-            ExportSegmentation_VDIPRR(handles)
-        end
         catch
             fid = fopen([handles.expDir filesep 'Failed Directories.txt']);
             fprintf(fid,'%s\n',All_Exp(i).name);
             fclose(fid);
-        end 
+        end
+        t(i-2) = toc;
+        str = sprintf('Estimated Time Remaining (hrs): %.2f',(mean(t(1:i-2))*(length(All_Exp)-i-2))/3600);
+        waitbar((i-2)/(length(All_Exp)-1),wb,str)
     end
 else
     [handles] = InitializeHandles_VDIPRR(handles);
@@ -148,7 +162,11 @@ else
     else
        MultiChSegmentNoParallel_VDIPRR(handles)
     end
+    h=msgbox('Exporting Now...');
     ExportSegmentation_VDIPRR(handles)
+    try
+        close(h)
+    end
 end
 guidata(hObject, handles);
 
@@ -368,6 +386,7 @@ function pushbutton7_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton7 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+[handles] = InitializeHandles_VDIPRR(handles);
 if handles.imNum ~= length(handles.im_file)
     handles.imNum = handles.imNum + 2;
 else
@@ -641,7 +660,7 @@ function edit16_Callback(hObject, eventdata, handles)
 
 val = str2double(get(hObject,'String'));
 if val <= length(handles.im_file)
-    handles.imNum = (val-1)*2+1;
+    handles.imNum = val-1;
     pushbutton6_Callback(hObject, eventdata, handles)
 else
     errordlg('Outside of image range')
@@ -671,6 +690,7 @@ function slider4_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+set(findobj('Tag','text30'),'String',get(hObject,'Value'))
 
 
 % --- Executes during object creation, after setting all properties.
@@ -781,7 +801,11 @@ function checkbox11_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of checkbox11
-
+if get(hObject, 'Value')==1
+    set(findobj('Tag','pushbutton18'),'Visible','On')
+else
+    set(findobj('Tag','pushbutton18'),'Visible','Off')
+end
 
 % --- Executes on button press in pushbutton18.
 function pushbutton18_Callback(hObject, eventdata, handles)
@@ -790,3 +814,90 @@ function pushbutton18_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 handles.whichExp = uigetdir(handles.expDir);
 guidata(hObject,handles)
+
+
+% --- Executes on selection change in popupmenu1.
+function popupmenu1_Callback(hObject, eventdata, handles)
+% hObject    handle to popupmenu1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns popupmenu1 contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from popupmenu1
+%Which background correction method?
+choice  = get(findobj('Tag','popupmenu1'),'Value');
+switch choice
+    case 1
+        handles.BackCorrMethod = 'None';
+        set(findobj('Tag','pushbutton3'),'Visible','Off')
+        set(findobj('Tag','edit18'),'Visible','Off')
+        set(findobj('Tag','slider4'),'Visible','Off')
+        set(findobj('Tag','pushbutton14'),'Visible','Off')
+        set(findobj('Tag','text30'),'Visible','Off')
+    case 2
+        handles.BackCorrMethod = 'CIDRE';
+        set(findobj('Tag','pushbutton3'),'Visible','On')
+        set(findobj('Tag','edit18'),'Visible','Off')
+        set(findobj('Tag','slider4'),'Visible','Off')
+        set(findobj('Tag','pushbutton14'),'Visible','Off')
+        set(findobj('Tag','text30'),'Visible','Off')
+    case 3
+        handles.BackCorrMethod = 'RollBallFilter';
+        set(findobj('Tag','pushbutton3'),'Visible','Off')
+        set(findobj('Tag','edit18'),'Visible','On')
+        set(findobj('Tag','slider4'),'Visible','Off')
+        set(findobj('Tag','pushbutton14'),'Visible','Off')
+        set(findobj('Tag','text30'),'Visible','Off')
+    case 4
+        handles.BackCorrMethod = 'ConstThresh';
+        set(findobj('Tag','pushbutton3'),'Visible','Off')
+        set(findobj('Tag','edit18'),'Visible','Off')
+        set(findobj('Tag','slider4'),'Visible','On')
+        set(findobj('Tag','pushbutton14'),'Visible','Off')
+        set(findobj('Tag','text30'),'Visible','On')
+    case 5
+        handles.BackCorrMethod = 'ImageSub';
+        set(findobj('Tag','pushbutton3'),'Visible','Off')
+        set(findobj('Tag','edit18'),'Visible','Off')
+        set(findobj('Tag','slider4'),'Visible','Off')
+        set(findobj('Tag','pushbutton14'),'Visible','On')
+        set(findobj('Tag','text30'),'Visible','Off')
+end
+guidata(hObject,handles)
+
+
+
+% --- Executes during object creation, after setting all properties.
+function popupmenu1_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to popupmenu1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function edit18_Callback(hObject, eventdata, handles)
+% hObject    handle to edit18 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit18 as text
+%        str2double(get(hObject,'String')) returns contents of edit18 as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit18_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit18 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end

@@ -13,7 +13,7 @@ CO.ImData.filename = handles.im_file(im).name;
 idx = strfind(CO.ImData.filename,'.');
 idx2 = strfind(CO.ImData.filename,filesep);
 CO.ImData.ImName = CO.ImData.filename(idx2(end)+1:idx-1);
-
+CO.ImData.ImNum = im;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -28,19 +28,28 @@ if size(nucIm,3) ~=1
     nucIm = rgb2gray(nucIm);
     im_info.BitDepth = im_info.BitDepth./3;
 end
-%Correct with CIDRE map if cidrecorrect is selected
-if handles.cidrecorrect
-    nucIm = ((double(nucIm))./(handles.CIDREmodel.v))*mean(handles.CIDREmodel.v(:));
-elseif handles.background_corr %correct with background correction (constant)
-    cont = uint16(imread(handles.CorrIm_file));
-    nucIm = (nucIm - cont);
-    nucIm(nucIm<0) = 0;
+nucIm = double(nucIm);
+%Correct Image:
+switch handles.BackCorrMethod
+    case 'CIDRE'
+        nucIm = (nucIm)./(handles.CIDREmodel.v)*mean(handles.CIDREmodel.v(:));
+    case 'RollBallFilter'
+         tempIm = imopen(nucIm,strel('disk',handles.rollfilter));
+         nucIm = nucIm - tempIm;
+    case 'ConstThresh'
+        nucIm  = nucIm - max(nucIm(:))*handles.back_thresh;
+    case 'ImageSub'
+        cont = uint16(imread(handles.CorrIm_file));
+        nucIm = (nucIm - cont);
+        nucIm(nucIm<0) = 0;
 end
+
 %The image array holds all the different images read in
 %read in fucci
 if size(cytoIm,3) ~=1
     cytoIm = rgb2gray(cytoIm);
 end
+cytoIm = double(cytoIm);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -49,23 +58,6 @@ end
 %To avoid segmenting blank images...  Make Variable in future?
 if max(std(nucIm)) < 3
     Nuc_label = zeros(size(Nuc_label));
-elseif handles.thresh_based_bin %Threshold based segmentation
-    SegIm_array = nucIm > handles.back_thresh(1)*im_info.BitDepth;
-    % Remove Noise using the noise_disk
-    noise = imtophat(SegIm_array, strel('disk', handles.nuc_noise_disk));
-    SegIm_array = SegIm_array - noise;
-    if numCh==0
-        SegIm_array = imdilate(SegIm_array,strel('disk',handles.smoothing_factor));
-    end
-    % Fill Holes
-    SegIm_array = imfill(SegIm_array, 'holes');
-    %To separate touching nuclei, compute the distance of the binary 
-    %transformed image using the bright areas of the image as the basins 
-    %by inverse of the distance measure
-    D = -bwdist(~SegIm_array);
-    D = -imhmax(-D,handles.NucSegHeight);  %Suppress values below NucSegHeight
-    Nuc_label = watershed(D); %Run watershed segmentation
-    Nuc_label(SegIm_array == 0) = 0; %Write all the background to zero.
 else %Otherise binarize image with Otsu's thresholding
     s = warning('error','images:multithresh:degenerateInput');
     s = warning('error','images:multithresh:noConvergence'); cnt = 0;
@@ -149,6 +141,8 @@ if size(p,1) ~= 0
     CO.CData.MajorAxisLength        = MajorAxisLength;
     CO.CData.MinorAxisLength        = MinorAxisLength;
     CO.CData.EquivDiameter          = EquivDiameter;
+    %Run the CellFeature_Reduced function to extract 26 features of
+    %segmented cells
     [FeatureSet, FeatureSetVarLabels]     = CellFeature_reduced(nucIm,Nuc_label,[1:size(p,1)],[]);
     CO.CData.Circularity                  = FeatureSet(:,3);
     CO.CData.Hu_mom1                      = FeatureSet(:,4);
@@ -174,7 +168,7 @@ if size(p,1) ~= 0
     CO.CData.Min_Gradient_Full            = FeatureSet(:,24);
     CO.CData.Max_Gradient_Full            = FeatureSet(:,25);
     CO.CData.Std_Gradient_Full            = FeatureSet(:,26);
-else
+else % if no cells give everyone a nan
     CO.CData.ImName{1} = CO.ImData.ImName;
     %For each channel save information into the structure
     CO.CData.Centroid_one           = nan;
