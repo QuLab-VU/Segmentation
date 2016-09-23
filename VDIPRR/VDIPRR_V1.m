@@ -86,6 +86,8 @@ handles.CorrIm_file = 'DsRed-Control.tif';
 handles.back_thresh = 0;
 %Constrast of image
 handles.contrast = 1;
+%Stores whether to segment the plate
+handles.proceed = 0; handles.startdate = date;
 %Handles
 handles.BatchExp = 0;
 handles.whichExp = [];
@@ -119,6 +121,17 @@ function pushbutton1_Callback(hObject, eventdata, handles)
 
 %Find if this is a batch job..
 handles.BatchExp = get(findobj('Tag','checkbox11'),'Value');
+%Deal with user option to either over write, write new, or skip
+
+
+handles.choice = questdlg('How would you like to treat previously existing results?', ...
+	'File Overwrite Options', ...
+	'Overwrite (old will be deleted)','Rewrite (new folder will be created)','Skip','Skip');
+
+if isempty(handles.choice)
+    error('Must choose an option for dealing with files')
+end
+
 %If you want the handles structure to be saved in your home directory
 %Makes it easy to find errors in the code.
 %save(['~' filesep 'Handles.mat'],'handles')
@@ -134,20 +147,58 @@ if handles.BatchExp %If a batch experiment
                 %Initialize the handles by reading parameters from each
                 %widget
                 [handles] = InitializeHandles_VDIPRR(handles);
-                if handles.Parallel
-                   MultiChSegmenter_Parallel_VDIPRR(handles)
-                else
-                   MultiChSegmentNoParallel_VDIPRR(handles)
+                switch handles.choice
+                    case 'Rewrite (new folder will be created)'
+                        str = [handles.expDir filesep 'Results_' date];
+                        t = exist(str,dir);
+                        if t==7
+                            temp = dir([handles.expDir filesep 'Results_' date '_*']);
+                            cnt = length(temp);
+                            movefile([handles.expDir filesep 'Results_' date '_' cnt+1],[handles.expDir filesep 'Results_' date])
+                        end
+                        mkdir([handles.expDir filesep 'Results_' date ]);
+                        mkdir([handles.expDir filesep 'Segmented_' date ]);
+                        handles.startdate = date;
+                        handles.proceed = 1;
+                    case 'Overwrite (old will be deleted)'
+                        handles.proceed = 1;
+                        temp = dir([handles.expDir filesep 'Results*']);
+                        try
+                            for j = 1:length(temp)
+                                rmdir([handles.expDir filesep temp(j).name],'s')
+                            end
+                            temp = dir([handles.expDir filesep 'Segmented*']);
+                            for j = 1:length(temp)
+                                rmdir([handles.expDir filesep temp(j).name],'s')
+                            end
+                        end
+                        mkdir([handles.expDir filesep 'Segmented_' date ]);
+                        mkdir([handles.expDir filesep 'Results_' date]);
+                        handles.startdate = date;
+                    case 'Skip'
+                        temp = dir([handles.expDir filesep 'Results*']);
+                        if isempty(temp)
+                            handles.proceed = 1;
+                        else
+                            handles.proceed = 0;
+                        end
                 end
-                %Export the results of the segmentation.
-                h=msgbox('Exporting Now...');
-                ExportSegmentation_VDIPRR(handles)
-                try
-                    close(h)
+                if handles.proceed
+                    if handles.Parallel
+                       MultiChSegmenter_Parallel_VDIPRR(handles)
+                    else
+                       MultiChSegmentNoParallel_VDIPRR(handles)
+                    end
+                    %Export the results of the segmentation.
+                    h=msgbox('Exporting Now...');
+                    ExportSegmentation_VDIPRR(handles)
+                    try
+                        close(h)
+                    end
                 end
             end
         catch
-            fid = fopen([handles.expDir filesep 'Failed Directories.txt']);
+            fid = fopen('Failed Directories.txt');
             fprintf(fid,'%s\n',All_Exp(i).name);
             fclose(fid);
         end
@@ -157,15 +208,54 @@ if handles.BatchExp %If a batch experiment
     end
 else
     [handles] = InitializeHandles_VDIPRR(handles);
-    if handles.Parallel
-       MultiChSegmenter_Parallel_VDIPRR(handles)
-    else
-       MultiChSegmentNoParallel_VDIPRR(handles)
+    switch handles.choice
+        case 'Rewrite (new folder will be created)'
+            str = [handles.expDir filesep 'Results_' date];
+            t = exist(str,dir);
+            if t==7
+                temp = dir([handles.expDir filesep 'Results_' date '_*']);
+                cnt = length(temp);
+                movefile([handles.expDir filesep 'Results_' date '_' cnt+1],[handles.expDir filesep 'Results_' date])
+            end       
+            mkdir([handles.expDir filesep 'Results_' date ]);
+            mkdir([handles.expDir filesep 'Segmented_' date ]);
+            handles.startdate = date;
+            handles.proceed = 1;
+        case 'Overwrite (old will be deleted)'
+            handles.proceed = 1;
+            temp = dir([handles.expDir filesep 'Results*']);
+            try
+                for j = 1:length(temp)
+                    rmdir([handles.expDir filesep temp(j).name],'s')
+                end
+                temp = dir([handles.expDir filesep 'Segmented*']);
+                for j = 1:length(temp)
+                    rmdir([handles.expDir filesep temp(j).name],'s')
+                end
+            end
+            mkdir([handles.expDir filesep 'Segmented_' date ]);
+            mkdir([handles.expDir filesep 'Results_' date]);
+            handles.startdate = date;
+        case 'Skip'
+            temp = dir([handles.expDir filesep 'Results*']);
+            if isempty(temp)
+                handles.proceed = 1;
+            else
+                handles.proceed = 0;
+            end
     end
-    h=msgbox('Exporting Now...');
-    ExportSegmentation_VDIPRR(handles)
-    try
-        close(h)
+
+    if handles.proceed
+        if handles.Parallel
+           MultiChSegmenter_Parallel_VDIPRR(handles)
+        else
+           MultiChSegmentNoParallel_VDIPRR(handles)
+        end
+        h=msgbox('Exporting Now...');
+        ExportSegmentation_VDIPRR(handles)
+        try
+            close(h)
+        end
     end
 end
 guidata(hObject, handles);
@@ -527,9 +617,10 @@ function pushbutton13_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 h = getframe(handles.axes1);
 [x,map] = frame2im(h);
-filename = [handles.expDir filesep 'Results' filesep 'Image_' num2str(handles.imNum) '.png'];
+mkdir([handles.expDir filesep 'ExportedImages']);
+filename = [handles.expDir filesep 'ExportedImages' filesep 'Image_' num2str(handles.imNum) '.png'];
 imwrite(x,filename,'png')
-save([handles.expDir filesep 'Processing_parameters.mat'],'handles');
+%save([handles.expDir filesep 'Processing_parameters.mat'],'handles');
 guidata(hObject,handles)
 
 

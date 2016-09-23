@@ -33,7 +33,7 @@ function percent = parfor_progress(N,t,i,num_cores)
 
 % By Jeremy Scheff - jdscheff@gmail.com - http://www.jeremyscheff.com/
 
-error(nargchk(0, 4, nargin, 'struct'));
+narginchk(0, 4);
 
 if isempty(N)
     N = -1;

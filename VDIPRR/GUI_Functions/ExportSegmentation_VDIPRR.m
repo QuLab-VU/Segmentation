@@ -6,18 +6,17 @@ function [handles] = ExportSegmentation_VDIPRR(handles)
 %Processing Parameters.csv contains all the segmentation parameters used
     
 %Open resulting segmentation
-seg_file = dir([handles.expDir filesep 'Segmented' filesep '*.mat']);
+seg_file = dir([handles.expDir filesep 'Segmented_' handles.startdate filesep '*.mat']);
 %Open a text file that was written as the segmentation was being run that
 %counted the number of cells in each image to allow for preallocating the
 %total number of cells
-fid = fopen([handles.expDir filesep 'Segmented' filesep 'NumDetect_Im.txt'], 'r');
+fid = fopen([handles.expDir filesep 'Segmented_' handles.startdate filesep 'NumDetect_Im.txt'], 'r');
 if fid < 0
     error('Cannot open file with cell count'); 
 end
 data = textscan(fid,'%s %d %s %d','delimiter','\t');
 handles.totCell = double(data{2});
 handles.totIm = double(data{4});
-mkdir([handles.expDir filesep 'Results']);
 
 %Reorder the files. Necessary because of matlabs strange numbering scheme
 to_order = [];
@@ -30,7 +29,7 @@ seg_file = seg_file(reorder_id);
 
 %Creaste the two tables
 for i = 1:length(seg_file)
-    load([handles.expDir filesep 'Segmented' filesep seg_file(i).name])
+    load([handles.expDir filesep 'Segmented_' handles.startdate filesep seg_file(i).name])
     if i == 1
         T_CellData  = struct2table(CO.CData);
         T_ImData    = struct2table(CO.ImData);
@@ -59,6 +58,8 @@ for i = 1:length(images)
     end
     T_ImData.FUCCIcnt(cnt) = sum(ilx==i & T_CellData.FUCCI_pos);
 end
+
+
 % 
 % % %Make 2 quick plots
 %  h = figure()
@@ -82,14 +83,17 @@ end
 % plot(mappedX(:,1),mappedX(:,2),'.')
 
 %Write tables
-writetable(T_CellData,[handles.expDir filesep 'Results' filesep  'Cell_Events.csv'])
-writetable(T_ImData, [handles.expDir filesep 'Results' filesep 'Image_Events.csv'])
+writetable(T_CellData,[handles.expDir filesep 'Results_' handles.startdate filesep  'Cell_Events.csv'])
+writetable(T_ImData, [handles.expDir filesep 'Results_' handles.startdate filesep 'Image_Events.csv'])
 
 
 ImageParameter = {'Nuclear_Segmentation_Level','Split_Nuclei','Noise_Filter_Nucleus',...
     'Segmentation_Smoothing_Factor'};
 tempMat_SegParameters = array2table([handles.NucnumLevel,handles.NucSegHeight,handles.nuc_noise_disk,...
 handles.smoothing_factor],'VariableNames',ImageParameter);
+tempMat_SegParameters.Date = handles.startdate;
+tempMat_SegParameters.FUCCI_Threshold = min(T_CellData.CytoInt(class==id));
+tempMat_SegParameters.AvgFucci_Intensity = mean(T_CellData.CytoInt(class==id));
 tempMat_SegParameters.Experiment_Directory = handles.masterDir;
 tempMat_SegParameters.Image_Ext = handles.imExt;
 tempMat_SegParameters.Date = date;
@@ -106,6 +110,6 @@ switch handles.BackCorrMethod
         tempMat_SegParameters.ImageSubFile = handles.CorrIm_File;
 end
 
-writetable(tempMat_SegParameters,[handles.expDir filesep 'Results' filesep 'Processing Parameters.csv']);
+writetable(tempMat_SegParameters,[handles.expDir filesep 'Results_' handles.startdate filesep 'Processing Parameters.csv']);
 %save([handles.expDir filesep 'Results' filesep 'Compiled Segmentation Results.mat'],'T_CellData','T_ImData','handles')
 end

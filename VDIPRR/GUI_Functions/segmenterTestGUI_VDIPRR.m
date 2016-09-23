@@ -39,5 +39,5 @@ set(gca,'XLabel',[],'YLabel',[])
 try
     close(h)
 end
-%save('tempHandles.mat','handles')
+save('tempHandles.mat','handles')
 

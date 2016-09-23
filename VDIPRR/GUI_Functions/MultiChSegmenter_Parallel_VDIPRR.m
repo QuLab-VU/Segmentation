@@ -7,8 +7,6 @@ h = msgbox('Please Be Patient, Segmenting Plate. See Command Window for estimate
 child = get(h,'Children');
 delete(child(1)) 
 
-%Make a directory for the segemented files
-mkdir([handles.expDir filesep 'Segmented'])
 
 %Initialize functions involved in parallel computing
 %Parfor_progress allows for an estimation of the amount of time remaining
@@ -25,7 +23,7 @@ num_cores = feature('numCores');
 parfor_progress(length(sample),[],[],[]);ParallelPoolInfo = Par(length(sample));
 %For all images
 totCell = zeros(length(sample),1);totIm=length(sample);
-sample = 1:2:length(handles.im_file);
+sample = 1:handles.numCh:length(handles.im_file);
 parfor i = 1:length(sample)
     Par.tic;
     %Send to segmenter code
@@ -33,7 +31,7 @@ parfor i = 1:length(sample)
     totCell(i) = CO.ImData.cellCount
     %Save segmentation in a directory called segmented
     %Call a function to be able to save result
-    parforsaverGUI_VDIPRR(CO,handles.expDir)    
+    parforsaverGUI_VDIPRR(CO,handles.startdate)    
     ParallelPoolInfo(i) = Par.toc
     %Update the status of the segmentation.
     parfor_progress([],ParallelPoolInfo(i).ItStop-ParallelPoolInfo(i).ItStart,i,num_cores);
@@ -42,7 +40,7 @@ stop(ParallelPoolInfo)
 parfor_progress(0,[],[],[]);
 %Write a text file to keep track of number of cells counted in each image
 %for preallocation purposes in the export segmentation function.
-fid = fopen([handles.expDir filesep 'Segmented' filesep 'NumDetect_Im.txt'], 'w');
+fid = fopen([handles.expDir filesep 'Segmented_' handles.startdate filesep 'NumDetect_Im.txt'], 'w');
 fprintf(fid, 'Detection_Count\t%d\tImage_Number\t%d',sum(totCell)+sum(totCell==0),totIm);
 fclose(fid);
 try

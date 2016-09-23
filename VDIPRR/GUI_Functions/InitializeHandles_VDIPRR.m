@@ -30,7 +30,7 @@ end
 handles.smoothing_factor = str2double(get(findobj('Tag','edit10'),'String'));
 handles.nuc_noise_disk = str2double(get(findobj('Tag','edit15'),'String'));
 
-mkdir([handles.expDir filesep 'Results']);
+
 %Set up structure with the filenames of the images to be segmented
 %Nuclei Directory (N)
 %A lot of messy code to set up the file structure as matlab reorders images
@@ -57,3 +57,5 @@ for j = 1:length(im_filnm)
 end
 handles.im_file = im_filnm;
 
+[handles] = plateInfo_reader(handles);
+handles.numCh = length(unique(handles.FileInfo.SOURCE_ILLUMINATION));

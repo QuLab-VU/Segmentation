@@ -13,7 +13,12 @@ CO.ImData.filename = handles.im_file(im).name;
 idx = strfind(CO.ImData.filename,'.');
 idx2 = strfind(CO.ImData.filename,filesep);
 CO.ImData.ImName = CO.ImData.filename(idx2(end)+1:idx-1);
+file_loc = find(cellfun(@(s) ~isempty(strfind(CO.ImData.ImName, s)), handles.FileInfo.IMAGE_ID));
+CO.ImData.Time = handles.FileInfo.DATESTR{file_loc};
+CO.ImData.WELL_X = str2double(handles.FileInfo.WELL_X{file_loc});
+CO.ImData.WELL_Y = str2double(handles.FileInfo.WELL_Y{file_loc});
 CO.ImData.ImNum = im;
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
