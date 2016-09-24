@@ -198,7 +198,7 @@ if handles.BatchExp %If a batch experiment
                 end
             end
         catch
-            fid = fopen('Failed Directories.txt');
+            fid = fopen('Failed Directories.txt','w');
             fprintf(fid,'%s\n',All_Exp(i).name);
             fclose(fid);
         end
