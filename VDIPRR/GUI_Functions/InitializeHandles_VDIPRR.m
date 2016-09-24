@@ -1,17 +1,16 @@
 function [handles] = InitializeHandles_VDIPRR(handles)
 %This function reads the segmentation parameters from each widget into a
 %structure passed to the segmentation functions called handles
-handles.imExt = get(findobj('Tag','edit6'),'String');
-handles.numCh = str2double(get(findobj('Tag','edit4'),'String'));
-handles.NucnumLevel = str2double(get(findobj('Tag','edit11'),'String'));
-handles.Parallel = get(findobj('Tag','checkbox6'),'Value');
+handles.imExt = get(handles.edit6,'String');
+handles.NucnumLevel = str2double(get(handles.edit11,'String'));
+handles.Parallel = get(handles.checkbox6,'Value');
 
 %Which background correction method?
 switch handles.BackCorrMethod
     case 'RollBallFilter'
-        handles.rollfilter = str2double(get(findobj('Tag','edit18'),'String'));
+        handles.rollfilter = str2double(get(handles.edit18,'String'));
     case 'ConstThresh'
-        handles.back_thresh = get(findobj('Tag','slider4'),'Value');
+        handles.back_thresh = get(handles.slider4,'Value');
     case 'ImageSub'
         if isempty(handles.CorrIm_file)
             msgbox('Error: No Control Image Selected')
@@ -27,8 +26,8 @@ switch handles.BackCorrMethod
 end
 
 
-handles.smoothing_factor = str2double(get(findobj('Tag','edit10'),'String'));
-handles.nuc_noise_disk = str2double(get(findobj('Tag','edit15'),'String'));
+handles.smoothing_factor = str2double(get(handles.edit10,'String'));
+handles.nuc_noise_disk = str2double(get(handles.edit15,'String'));
 
 
 %Set up structure with the filenames of the images to be segmented

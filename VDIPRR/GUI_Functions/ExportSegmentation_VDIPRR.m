@@ -4,7 +4,7 @@ function [handles] = ExportSegmentation_VDIPRR(handles)
 %Image Events is a summary of each image segmented
 %Handles.mat contains handle to the segmenter and all the parameters
 %Processing Parameters.csv contains all the segmentation parameters used
-    
+
 %Open resulting segmentation
 seg_file = dir([handles.expDir filesep 'Segmented_' handles.startdate filesep '*.mat']);
 %Open a text file that was written as the segmentation was being run that
@@ -40,6 +40,8 @@ for i = 1:length(seg_file)
 end
 
 %Count FUCCI+ cells using a gaussian mixed model
+%Don't display the warnings for fitgmdist about not using nan's
+warning('off','all')
 GM = fitgmdist(T_CellData.CytoInt,2);
 class = cluster(GM,T_CellData.CytoInt);
 [~, id] = max(GM.mu);

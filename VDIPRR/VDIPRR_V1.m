@@ -134,9 +134,9 @@ end
 
 %If you want the handles structure to be saved in your home directory
 %Makes it easy to find errors in the code.
-%save(['~' filesep 'Handles.mat'],'handles')
+%save(['Handles.mat'],'handles')
 if handles.BatchExp %If a batch experiment
-    All_Exp = dir(handles.expDir); %Find all the files
+    All_Exp = dir(handles.masterDir); %Find all the files
     t = zeros(length(All_Exp),1);
     wb = waitbar(0,'Estimated Time Remaining (hrs)');
     for i = 3:length(All_Exp) %Ignore the . and .. directory
@@ -150,11 +150,12 @@ if handles.BatchExp %If a batch experiment
                 switch handles.choice
                     case 'Rewrite (new folder will be created)'
                         str = [handles.expDir filesep 'Results_' date];
-                        t = exist(str,dir);
+                        t = exist(str,'dir');
                         if t==7
                             temp = dir([handles.expDir filesep 'Results_' date '_*']);
                             cnt = length(temp);
-                            movefile([handles.expDir filesep 'Results_' date '_' cnt+1],[handles.expDir filesep 'Results_' date])
+                            movefile([handles.expDir filesep 'Results_' date],[handles.expDir filesep 'Results_' date '_' num2str(cnt+1)])
+                            movefile([handles.expDir filesep 'Segmented_' date],[handles.expDir filesep 'Segmented_' date '_' num2str(cnt+1)])
                         end
                         mkdir([handles.expDir filesep 'Results_' date ]);
                         mkdir([handles.expDir filesep 'Segmented_' date ]);
@@ -198,12 +199,13 @@ if handles.BatchExp %If a batch experiment
                 end
             end
         catch
-            fid = fopen('Failed Directories.txt','w');
+            disp(sprintf('There was an error segmenting %s',All_Exp(i).name))
+            fid = fopen('Failed Directories.txt','wt');
             fprintf(fid,'%s\n',All_Exp(i).name);
             fclose(fid);
         end
         t(i-2) = toc;
-        str = sprintf('Estimated Time Remaining (hrs): %.2f',(mean(t(1:i-2))*(length(All_Exp)-i-2))/3600);
+        str = sprintf('Estimated Time Remaining (hrs): %.2f',(mean(t(1:i-2))*(length(All_Exp)-i))/3600);
         waitbar((i-2)/(length(All_Exp)-1),wb,str)
     end
 else
@@ -211,11 +213,12 @@ else
     switch handles.choice
         case 'Rewrite (new folder will be created)'
             str = [handles.expDir filesep 'Results_' date];
-            t = exist(str,dir);
+            t = exist(str,'dir');
             if t==7
                 temp = dir([handles.expDir filesep 'Results_' date '_*']);
                 cnt = length(temp);
                 movefile([handles.expDir filesep 'Results_' date '_' cnt+1],[handles.expDir filesep 'Results_' date])
+                movefile([handles.expDir filesep 'Segmented_' date],[handles.expDir filesep 'Segmented_' date '_' num2str(cnt+1)])
             end       
             mkdir([handles.expDir filesep 'Results_' date ]);
             mkdir([handles.expDir filesep 'Segmented_' date ]);
@@ -257,6 +260,9 @@ else
             close(h)
         end
     end
+end
+try
+    close(wb)
 end
 guidata(hObject, handles);
 
