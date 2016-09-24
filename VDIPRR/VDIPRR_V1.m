@@ -120,7 +120,7 @@ function pushbutton1_Callback(hObject, eventdata, handles)
 %current value of every field
 
 %Find if this is a batch job..
-handles.BatchExp = get(findobj('Tag','checkbox11'),'Value');
+handles.BatchExp = get(handles.checkbox11,'Value');
 %Deal with user option to either over write, write new, or skip
 
 
@@ -199,6 +199,8 @@ if handles.BatchExp %If a batch experiment
                 end
             end
         catch
+            rmdir([handles.expDir filesep 'Segmented_' date ],'s')
+            rmdir([handles.expDir filesep 'Results_' date ],'s')
             disp(sprintf('There was an error segmenting %s',All_Exp(i).name))
             fid = fopen('Failed Directories.txt','wt');
             fprintf(fid,'%s\n',All_Exp(i).name);
@@ -281,14 +283,14 @@ handles.cidrecorrect = (get(hObject,'Value'));
 % Hint: get(hObject,'Value') returns toggle state of checkbox9
 temp = get(hObject,'Value');
 if temp
-    set(findobj('Tag','checkbox9'),'Visible','off');
-    set(findobj('Tag','pushbutton14'),'Visible','off');
+    set(handles.checkbox9,'Visible','off');
+    set(handles.pushbutton14,'Visible','off');
 else
-    set(findobj('Tag','checkbox9'),'Visible','on');
-    set(findobj('Tag','pushbutton14'),'Visible','on');
+    set(handles.checkbox9,'Visible','on');
+    set(handles.pushbutton14,'Visible','on');
 end
 if handles.cidrecorrect == 1
-    h = findobj('Tag','pushbutton3');
+    h = handles.pushbutton3';
     set(h,'Visible','on')
 end
 guidata(hObject, handles);
@@ -376,7 +378,7 @@ function slider1_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 handles.NucnumLevel = get(hObject,'Value');
-h = findobj('Tag','edit11');
+h = handles.edit11;
 set(h,'String',num2str(handles.NucnumLevel))
 guidata(hObject, handles);
 
@@ -401,7 +403,7 @@ function edit11_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of edit11 as text
 %        str2double(get(hObject,'String')) returns contents of edit11 as a double
 handles.NucnumLevel = str2num(get(hObject,'String'));
-h = findobj('Tag','slider1');
+h = handles.slider1;
 set(h,'Value',handles.NucnumLevel)
 guidata(hObject,handles)
 
@@ -423,7 +425,7 @@ function pushbutton6_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton6 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-handles.BatchExp = get(findobj('Tag','checkbox11'),'Value');
+handles.BatchExp = get(handles.checkbox11,'Value');
 
 if handles.BatchExp
     All_Exp = dir(handles.expDir);
@@ -433,11 +435,11 @@ if handles.BatchExp
         handles.expDir = handles.whichExp;
     end
     [handles] = InitializeHandles_VDIPRR(handles);
-    set(findobj('Tag','pushbutton7'),'Visible','on')
+    set(handles.pushbutton7,'Visible','on')
     segmenterTestGUI_VDIPRR(handles)
 else
     [handles] = InitializeHandles_VDIPRR(handles);
-    set(findobj('Tag','pushbutton7'),'Visible','on')
+    set(handles.pushbutton7,'Visible','on')
     segmenterTestGUI_VDIPRR(handles)
 end
 guidata(hObject, handles);
@@ -505,8 +507,8 @@ h = msgbox(str)
 [handles] = ExportSegmentationV4(handles)
 close(h)
 
-%set(findobj('Tag','pushbutton15'),'Visible','on')
-%set(findobj('Tag','pushbutton9'),'Visible','on')
+%set(handles.pushbutton15,'Visible','on')
+%set(handles.pushbutton9,'Visible','on')
 
     
 guidata(hObject,handles)
@@ -546,7 +548,7 @@ function slider2_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 handles.NucSegHeight = get(hObject,'Value');
-h = findobj('Tag','edit13');
+h = handles.edit13;
 set(h,'String',num2str(handles.NucSegHeight))
 guidata(hObject,handles)
 
@@ -573,7 +575,7 @@ function edit13_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of edit13 as text
 %        str2double(get(hObject,'String')) returns contents of edit13 as a double
 handles.NucSegHeight = str2double(get(hObject,'String'));
-h = findobj('Tag','slider2');
+h = handles.slider2;
 set(h,'Value',handles.NucSegHeight);
 guidata(hObject,handles)
 
@@ -639,7 +641,7 @@ function slider3_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 handles.CytonumLevel = get(hObject,'Value')
-h = findobj('Tag','edit14')
+h = handles.edit14;
 set(h,'String',num2str(handles.CytonumLevel))
 guidata(hObject, handles);
 
@@ -664,7 +666,7 @@ function edit14_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of edit14 as text
 %        str2double(get(hObject,'String')) returns contents of edit14 as a double
 handles.CytonumLevel = str2num(get(hObject,'String'));
-h = findobj('Tag','slider3');
+h = handles.slider3;
 set(h,'Value',handles.CytonumLevel)
 guidata(hObject,handles)
 
@@ -733,16 +735,16 @@ function checkbox9_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of checkbox9
 temp = get(hObject,'Value');
 if temp
-    set(findobj('Tag','checkbox1'),'Visible','off');
-    set(findobj('Tag','pushbutton3'),'Visible','off');
-    set(findobj('Tag','pushbutton14'),'Visible','on');
-%     set(findobj('Tag','checkbox10'),'Visible','off');
-%     set(findobj('Tag','slider4'),'Visible','off');
+    set(handles.checkbox1,'Visible','off');
+    set(handles.pushbutton3,'Visible','off');
+    set(handles.pushbutton14,'Visible','on');
+%     set(handles.checkbox10,'Visible','off');
+%     set(handles.slider4,'Visible','off');
 else
-    set(findobj('Tag','checkbox1'),'Visible','on');
-    set(findobj('Tag','pushbutton3'),'Visible','on');
-%     set(findobj('Tag','checkbox10'),'Visible','on');
-%     set(findobj('Tag','slider4'),'Visible','on');
+    set(handles.checkbox1,'Visible','on');
+    set(handles.pushbutton3,'Visible','on');
+%     set(handles.checkbox10,'Visible','on');
+%     set(handles.slider4,'Visible','on');
 end
 guidata(hObject,handles)
 
@@ -787,7 +789,7 @@ function slider4_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
-set(findobj('Tag','text30'),'String',get(hObject,'Value'))
+set(handles.text30,'String',get(hObject,'Value'))
 
 
 % --- Executes during object creation, after setting all properties.
@@ -811,16 +813,16 @@ function checkbox10_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of checkbox10
 % temp = get(hObject,'Value');
 % if temp
-%     set(findobj('Tag','checkbox1'),'Visible','off');
-%     set(findobj('Tag','pushbutton3'),'Visible','off');
-%     set(findobj('Tag','slider4'),'Visible','on');
-%     set(findobj('Tag','checkbox9'),'Visible','off');
-%     set(findobj('Tag','pushbutton14'),'Visible','off');
+%     set(handles.checkbox1,'Visible','off');
+%     set(handles.pushbutton3,'Visible','off');
+%     set(handles.slider4,'Visible','on');
+%     set(handles.checkbox9,'Visible','off');
+%     set(handles.pushbutton14,'Visible','off');
 % else
-%     set(findobj('Tag','checkbox1'),'Visible','on');
-%     set(findobj('Tag','pushbutton3'),'Visible','on');
-%     set(findobj('Tag','checkbox9'),'Visible','off');
-%     set(findobj('Tag','pushbutton14'),'Visible','off');
+%     set(handles.checkbox1,'Visible','on');
+%     set(handles.pushbutton3,'Visible','on');
+%     set(handles.checkbox9,'Visible','off');
+%     set(handles.pushbutton14,'Visible','off');
 % end
 guidata(hObject,handles)
 
@@ -899,9 +901,9 @@ function checkbox11_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of checkbox11
 if get(hObject, 'Value')==1
-    set(findobj('Tag','pushbutton18'),'Visible','On')
+    set(handles.pushbutton18,'Visible','On')
 else
-    set(findobj('Tag','pushbutton18'),'Visible','Off')
+    set(handles.pushbutton18,'Visible','Off')
 end
 
 % --- Executes on button press in pushbutton18.
@@ -922,43 +924,43 @@ function popupmenu1_Callback(hObject, eventdata, handles)
 % Hints: contents = cellstr(get(hObject,'String')) returns popupmenu1 contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from popupmenu1
 %Which background correction method?
-choice  = get(findobj('Tag','popupmenu1'),'Value');
+choice  = get(handles.popupmenu1,'Value');
 switch choice
     case 1
         handles.BackCorrMethod = 'None';
-        set(findobj('Tag','pushbutton3'),'Visible','Off')
-        set(findobj('Tag','edit18'),'Visible','Off')
-        set(findobj('Tag','slider4'),'Visible','Off')
-        set(findobj('Tag','pushbutton14'),'Visible','Off')
-        set(findobj('Tag','text30'),'Visible','Off')
+        set(handles.pushbutton3,'Visible','Off')
+        set(handles.edit18,'Visible','Off')
+        set(handles.slider4,'Visible','Off')
+        set(handles.pushbutton14,'Visible','Off')
+        set(handles.text30,'Visible','Off')
     case 2
         handles.BackCorrMethod = 'CIDRE';
-        set(findobj('Tag','pushbutton3'),'Visible','On')
-        set(findobj('Tag','edit18'),'Visible','Off')
-        set(findobj('Tag','slider4'),'Visible','Off')
-        set(findobj('Tag','pushbutton14'),'Visible','Off')
-        set(findobj('Tag','text30'),'Visible','Off')
+        set(handles.pushbutton3,'Visible','On')
+        set(handles.edit18,'Visible','Off')
+        set(handles.slider4,'Visible','Off')
+        set(handles.pushbutton14,'Visible','Off')
+        set(handles.text30,'Visible','Off')
     case 3
         handles.BackCorrMethod = 'RollBallFilter';
-        set(findobj('Tag','pushbutton3'),'Visible','Off')
-        set(findobj('Tag','edit18'),'Visible','On')
-        set(findobj('Tag','slider4'),'Visible','Off')
-        set(findobj('Tag','pushbutton14'),'Visible','Off')
-        set(findobj('Tag','text30'),'Visible','Off')
+        set(handles.pushbutton3,'Visible','Off')
+        set(handles.edit18,'Visible','On')
+        set(handles.slider4,'Visible','Off')
+        set(handles.pushbutton14,'Visible','Off')
+        set(handles.text30,'Visible','Off')
     case 4
         handles.BackCorrMethod = 'ConstThresh';
-        set(findobj('Tag','pushbutton3'),'Visible','Off')
-        set(findobj('Tag','edit18'),'Visible','Off')
-        set(findobj('Tag','slider4'),'Visible','On')
-        set(findobj('Tag','pushbutton14'),'Visible','Off')
-        set(findobj('Tag','text30'),'Visible','On')
+        set(handles.pushbutton3,'Visible','Off')
+        set(handles.edit18,'Visible','Off')
+        set(handles.slider4,'Visible','On')
+        set(handles.pushbutton14,'Visible','Off')
+        set(handles.text30,'Visible','On')
     case 5
         handles.BackCorrMethod = 'ImageSub';
-        set(findobj('Tag','pushbutton3'),'Visible','Off')
-        set(findobj('Tag','edit18'),'Visible','Off')
-        set(findobj('Tag','slider4'),'Visible','Off')
-        set(findobj('Tag','pushbutton14'),'Visible','On')
-        set(findobj('Tag','text30'),'Visible','Off')
+        set(handles.pushbutton3,'Visible','Off')
+        set(handles.edit18,'Visible','Off')
+        set(handles.slider4,'Visible','Off')
+        set(handles.pushbutton14,'Visible','On')
+        set(handles.text30,'Visible','Off')
 end
 guidata(hObject,handles)
 
