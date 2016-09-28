@@ -144,6 +144,7 @@ if handles.BatchExp %If a batch experiment
         try %If encounters an error it will keep processing and write a textfile with the failed directories.
             if All_Exp(i).isdir %Only run if it is a directory
                 handles.expDir = [handles.masterDir filesep All_Exp(i).name];
+                disp(All_Exp(i).name);
                 %Initialize the handles by reading parameters from each
                 %widget
                 [handles] = InitializeHandles_VDIPRR(handles);
@@ -180,6 +181,8 @@ if handles.BatchExp %If a batch experiment
                         temp = dir([handles.expDir filesep 'Results*']);
                         if isempty(temp)
                             handles.proceed = 1;
+                            mkdir([handles.expDir filesep 'Segmented_' date ]);
+                            mkdir([handles.expDir filesep 'Results_' date]);
                         else
                             handles.proceed = 0;
                         end
@@ -245,6 +248,8 @@ else
             temp = dir([handles.expDir filesep 'Results*']);
             if isempty(temp)
                 handles.proceed = 1;
+                mkdir([handles.expDir filesep 'Segmented_' date ]);
+                mkdir([handles.expDir filesep 'Results_' date]);
             else
                 handles.proceed = 0;
             end
