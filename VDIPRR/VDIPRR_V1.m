@@ -179,7 +179,7 @@ if handles.BatchExp %If a batch experiment
                         handles.startdate = date;
                     case 'Skip'
                         temp = dir([handles.expDir filesep 'Results*']);
-                        if isempty(temp)
+                        if isempty(temp) &  not exist([handles.expDir filesep 'Segmentation error.txt'])
                             handles.proceed = 1;
                             mkdir([handles.expDir filesep 'Segmented_' date ]);
                             mkdir([handles.expDir filesep 'Results_' date]);
@@ -201,13 +201,23 @@ if handles.BatchExp %If a batch experiment
                     end
                 end
             end
-        catch
-            rmdir([handles.expDir filesep 'Segmented_' date ],'s')
-            rmdir([handles.expDir filesep 'Results_' date ],'s')
+        catch ME
             disp(sprintf('There was an error segmenting %s',All_Exp(i).name))
+            disp(sprintf('error = %s',ME.message))
+            
             fid = fopen('Failed Directories.txt','wt');
             fprintf(fid,'%s\n',All_Exp(i).name);
             fclose(fid);
+            
+            errorfilename = [handles.expDir filesep 'Segmentation error.txt']
+            fid = fopen(errorfilename,'wt');
+            fprintf(fid,'%s\n',getReport(ME));
+            fclose(fid);
+
+%           rmdir([handles.expDir filesep 'Segmented*'],'s')
+%           rmdir([handles.expDir filesep 'Results_' date ],'s')
+%           rethrow(ME)
+ 
         end
         t(i-2) = toc;
         str = sprintf('Estimated Time Remaining (hrs): %.2f',(mean(t(1:i-2))*(length(All_Exp)-i))/3600);
