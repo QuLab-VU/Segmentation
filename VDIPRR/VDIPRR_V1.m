@@ -144,6 +144,7 @@ if handles.BatchExp %If a batch experiment
         try %If encounters an error it will keep processing and write a textfile with the failed directories.
             if All_Exp(i).isdir %Only run if it is a directory
                 handles.expDir = [handles.masterDir filesep All_Exp(i).name];
+                disp(All_Exp(i).name);
                 %Initialize the handles by reading parameters from each
                 %widget
                 [handles] = InitializeHandles_VDIPRR(handles);
@@ -178,7 +179,7 @@ if handles.BatchExp %If a batch experiment
                         handles.startdate = date;
                     case 'Skip'
                         temp = dir([handles.expDir filesep 'Results*']);
-                        if isempty(temp)
+                        if isempty(temp) &  not exist([handles.expDir filesep 'Segmentation error.txt'])
                             handles.proceed = 1;
                             mkdir([handles.expDir filesep 'Segmented_' date ]);
                             mkdir([handles.expDir filesep 'Results_' date]);
@@ -200,14 +201,21 @@ if handles.BatchExp %If a batch experiment
                     end
                 end
             end
-        catch
+        catch ME
             try
                 rmdir([handles.expDir filesep 'Segmented_' date ],'s')
                 rmdir([handles.expDir filesep 'Results_' date ],'s')
             end
             disp(sprintf('There was an error segmenting %s',All_Exp(i).name))
+            disp(sprintf('error = %s',ME.message))
+            
             fid = fopen('Failed Directories.txt','wt');
             fprintf(fid,'%s\n',All_Exp(i).name);
+            fclose(fid);
+            
+            errorfilename = [handles.expDir filesep 'Segmentation error.txt']
+            fid = fopen(errorfilename,'wt');
+            fprintf(fid,'%s\n',getReport(ME));
             fclose(fid);
         end
         t(i-2) = toc;
