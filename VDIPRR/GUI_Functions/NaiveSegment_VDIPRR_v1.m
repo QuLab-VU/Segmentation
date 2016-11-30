@@ -146,9 +146,9 @@ if size(p,1) ~= 0
     CO.CData.MajorAxisLength        = MajorAxisLength;
     CO.CData.MinorAxisLength        = MinorAxisLength;
     CO.CData.EquivDiameter          = EquivDiameter;
-    %Run the CellFeature_Reduced function to extract 26 features of
+    %Run the CellFeatureSets function to extract 26 features of
     %segmented cells
-    [FeatureSet, FeatureSetVarLabels]     = CellFeature_reduced(nucIm,Nuc_label,[1:size(p,1)],[]);
+    [FeatureSet, FeatureSetVarLabels]     = CellFeatureSets(nucIm,Nuc_label,[1:size(p,1)],[]);
     CO.CData.Circularity                  = FeatureSet(:,3);
     CO.CData.Hu_mom1                      = FeatureSet(:,4);
     CO.CData.Hu_mom2                      = FeatureSet(:,5);

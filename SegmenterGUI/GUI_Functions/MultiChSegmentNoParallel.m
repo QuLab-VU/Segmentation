@@ -1,156 +1,49 @@
 function [] = MultiChSegmentNoParallel(handles)
 
 % Multi Channel Cell Segmentation with channel correction without parallel loop 
-%%Christian Meyer 12.30.15
-%Segmentation code to find the intensities per cell of the each channel for
-%a series of images from the CellaVista presorted with the
-%cellaVistaFileSorter.
-%Option for segmenting just the surface of the cell or segmenting based on
-%the nucleus by adding a dilated nuclear channel to the cytoplasmic
-%segmentation.
-%All functionality assumes images have been separated into separate 
-%Channels useing cellaVistaFileSorter.m
-%Segmentation of all channels for each image based on nuclear image.
-%First nuclei are segmented.  Then each cytoplasmic channel is segmented and 
-%added together to come up with a final cytoplamsic bw image
-%Finally the cytoplasmic bw image is segmented using a k-nearest neighbor algorithm to
-%predict each pixel's respective nuclei.
-%The intensity, area, and nuclear and cytoplasmic labels are stored in a structure which is saved to
-%a folder called Segemented with the row, channel, and image number in the name.
+%%Christian Meyer 12.1.16
 
+h = msgbox('Please Be Patient, This box will close when operation is finished. See Command Window for estimate of time to completion');
+child = get(h,'Children');
+delete(child(1)) 
 
-h = msgbox('Please Be Patient, This box will close when operation is finished. See Command Window for estimate of time to completion')
+%Make a directory for the segemented files
+mkdir([handles.expDir filesep 'Segmented'])
 
-imExt = handles.imExt;
-expDir = handles.expDir;
-%Whether to correct with cidrecorrect
-cidrecorrect = handles.cidrecorrect;
-%Number of levels used in otsu's method of thresholding
-NucnumLevel = handles.NucnumLevel;
-CytonumLevel = handles.CytonumLevel;
-%Segment the surface
-surface_segment = handles.surface_segment;
-%Segment by dilating the nucleus
-nuclear_segment = handles.nuclear_segment;
-nuclear_segment_factor = handles.nuclear_segment_factor;
-surface_segment_factor = handles.surface_segment_factor;
-%Clear cells touching border?
-cl_border = handles.cl_border;
-%Noise disk 5 for 20x 10 for 40X
-noise_disk = handles.noise_disk;
-%NOise disk for nuclei
-nuc_noise_disk = handles.nuc_noise_disk;
-%Smoothing factor for cytoplasm segmentation.  (-) means to erode image
-smoothing_factor = handles.smoothing_factor;
-%Number of channels in the image
-numCh = handles.numCh;
-%Segmentation height for nuclei in the watershed segmentation
-NucSegHeight = handles.NucSegHeight;
-%Structure to hold the filenames and segmentation results
-NUC = handles.NUC;
-Cyto = handles.Cyto;
-%Background correction as oppose to CIDRE?
-background_corr = handles.background_corr;
-%File for background correction
-CorrIm_file = handles.CorrIm_file;
-%Is this a pathway experiment
-bd_pathway = handles.bd_pathway;
-%Binarize by threshold
-thresh_based_bin = handles.thresh_based_bin;
-%Threshold binarization
-back_thresh = handles.back_thresh;
-BFnuc = handles.BFnuc;
-
-filnames = dir([expDir '/Segmented']); temp = [];
-if length(filnames)>2
-    for i = 3:length(filnames)
-        temp{i-2} = filnames(i).name(9:strfind(filnames(i).name,'.')-1)
-    end
-    x = [1:length(NUC.filnms)];
-    y = sort(str2double(temp));
-    unfinishedImages = x(~ismember(x,y));
-else
-    unfinishedImages = 1:length(NUC.filnms);
-end
-
+%If there was an error leaving the folder unfinished used this commented
+%code to finish it.
+% filnames = dir([expDir '/Segmented']); temp = [];
+% if length(filnames)>2
+%     for i = 3:length(filnames)
+%         id = strfind(filnames(i).name,'.');
+%         temp{i-2} = filnames(i).name(9:id(end)-1)
+%     end
+%     x = [1:length(handles.NUC.filnms)];
+%     y = sort(str2double(temp));
+%     unfinishedImages = x(~ismember(x,y));
+% else
+%     unfinishedImages = 1:length(handles.NUC.filnms);
+% end
 %For all images
-for rand = 1:size(unfinishedImages,2)
+totCell = zeros(max(size(handles.NUC.filnms)),1);totIm = max(size(handles.NUC.filnms));
+t = zeros(max(size(handles.NUC.filnms)),1);
+for i = 1:max(size(handles.NUC.filnms))
     tic
-    i = unfinishedImages(rand);
-
-    im_info = imfinfo(char(NUC.filnms(i)),imExt);
     %Send to segmenter code
-    [CO,Im_array] = NaiveSegmentV8(cidrecorrect,NucnumLevel,CytonumLevel,surface_segment,...
-    nuclear_segment,noise_disk,nuc_noise_disk,nuclear_segment_factor,surface_segment_factor,...
-    smoothing_factor,NucSegHeight,numCh,NUC,Cyto,i,background_corr,CorrIm_file,bd_pathway,...
-    back_thresh,thresh_based_bin,im_info,BFnuc);
+    [CO,Im_array] = NaiveSegmentV8(handles,i);
+    totCell(i) = CO.ImData.cellCount;
     %Save segmentation in a directory called segmented
     %Call a function to be able to save result
-    save([expDir '/Segmented/' rw '_' cl '_' num2str(i) '.mat'], 'CO')
-    t(rand) = toc;
-    fprintf('%.2f%% Complete, Estimated Time: %.2f\n',rand/length(unfinishedImages)*100,mean(t)/60*(length(unfinishedImages)-rand))
+    save([handles.expDir '/Segmented/' CO.ImData.rw '_' CO.ImData.cl '_' num2str(i) '.mat'], 'CO')
+    t(i) = toc;
+    str = sprintf('%.2f%% Complete, Estimated Time: %.2f\n',[i/max(size(handles.NUC.filnms))*100,mean(t(1:i))/60*((max(size(handles.NUC.filnms)))-i)]);
+    disp(str);
 end
-
-%Now Open all the segmented images and compile the statistics on nuclear
-%size
-
-seg_file = dir([handles.expDir filesep 'Segmented/*.mat']);
-Area = [];
-for i = 1:size(seg_file,1)
-    load([handles.expDir filesep 'Segmented/' seg_file(i).name])
-    Area = [Area, CO.Nuc.Area(CO.Nuc.Area~=0 & ~CO.class.edge)];
-end
-%Take the log of the area to normalize the data
-logDist = log(Area);
-avg_dist = mean(logDist);
-std_dist = std(logDist);
-%Now classify based on nuclear size
-for i = 1:size(seg_file,1)
-    load([handles.expDir filesep 'Segmented/' seg_file(i).name])
-    %initialize fields in the struct
-    CO.class.debris     	= [];
-    CO.class.nucleus    	= [];
-    CO.class.over       	= [];
-    CO.class.under      	= [];
-    CO.class.apoptotic  	= [];
-    CO.class.mitotic    	= [];
-    if CO.cellCount == 0
-        CO.class.debris    	= 0;
-        CO.class.nucleus   	= 0;
-        CO.class.over      	= 0;
-        CO.class.under     	= 0;
-        CO.class.apoptotic 	= 0;
-        CO.class.mitotic   	= 0;
-    else
-        %Run a first pass to classify the nuclei
-        for k=1:CO.cellCount
-            CO.class.debris(k)     	= 0;
-            CO.class.nucleus(k)    	= 0;
-            CO.class.over(k)       	= 0;
-            CO.class.under(k)      	= 0;
-            CO.class.apoptotic(k)  	= 0;
-            CO.class.mitotic(k)    	= 0;
-        end
-        for k=1:CO.cellCount
-            %rough first pass classification
-            if ~CO.class.edge(k)
-                if(log(CO.Nuc.Area(k)) < avg_dist-3*std_dist)    
-                  CO.class.debris(k) 	= 1;
-                elseif(log(CO.Nuc.Area(k)) < avg_dist-1.5*std_dist) 
-                  CO.class.nucleus(k) 	= 1;
-                elseif(log(CO.Nuc.Area(k))  < avg_dist+1.8*std_dist)  
-                  CO.class.nucleus(k) 	= 1;
-                else
-                  CO.class.under(k) 	= 1;
-                end
-            end
-        end
-    end
-    save([handles.expDir filesep 'Segmented/' seg_file(i).name], 'CO')
-    clear CO
-end
+fid = fopen([handles.expDir filesep 'Segmented/NumDetect_Im.txt'], 'w');
+fprintf(fid, 'Detection_Count\t%d\tImage_Number\t%d',sum(totCell)+sum(totCell==0),totIm);
+fclose(fid);
 close(h)
-
+end
 
 
 

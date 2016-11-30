@@ -1,4 +1,4 @@
-function [FeatureSet, FeatureSetVarLabels] = CellFeature_reduced(orig_im,label_im,idx,properties)
+function [FeatureSet, FeatureSetVarLabels] = CellFeatureSet(orig_im,label_im,idx,properties)
 %This is a reduced feature set of shape and intensity based 
     num_ch = size(orig_im,3);  %Number of channels
     detections = max(label_im(:)); %Number of detected cells
@@ -140,19 +140,19 @@ function [FeatureSet, FeatureSetVarLabels] = CellFeature_reduced(orig_im,label_i
     end
     
     for i = 1:num_ch
-        str1 = sprintf('Mean_Intensity_CH%i',i);
+        str1 = sprintf('Mean_Gradient_full_CH%i',i);
         FeatureSetVarLabels = [FeatureSetVarLabels, str1];
     end
     for i = 1:num_ch
-        str1 = sprintf('Min_Intensity_CH%i',i);
+        str1 = sprintf('Min_Gradient_full_CH%i',i);
         FeatureSetVarLabels = [FeatureSetVarLabels, str1];
     end
     for i = 1:num_ch
-        str1 = sprintf('Max_Intensity_CH%i',i);
+        str1 = sprintf('Max_Gradient_full_CH%i',i);
         FeatureSetVarLabels = [FeatureSetVarLabels, str1];
     end
     for i = 1:num_ch
-        str1 = sprintf('Std_Intensity_CH%i',i);
+        str1 = sprintf('Std_Gradient_full_CH%i',i);
         FeatureSetVarLabels = [FeatureSetVarLabels, str1];
     end
     

@@ -180,6 +180,8 @@ if handles.BatchExp %If a batch experiment
                         temp = dir([handles.expDir filesep 'Results*']);
                         if isempty(temp)
                             handles.proceed = 1;
+                            mkdir([handles.expDir filesep 'Segmented_' date ]);
+                            mkdir([handles.expDir filesep 'Results_' date]);
                         else
                             handles.proceed = 0;
                         end
@@ -199,8 +201,10 @@ if handles.BatchExp %If a batch experiment
                 end
             end
         catch
-            rmdir([handles.expDir filesep 'Segmented_' date ],'s')
-            rmdir([handles.expDir filesep 'Results_' date ],'s')
+            try
+                rmdir([handles.expDir filesep 'Segmented_' date ],'s')
+                rmdir([handles.expDir filesep 'Results_' date ],'s')
+            end
             disp(sprintf('There was an error segmenting %s',All_Exp(i).name))
             fid = fopen('Failed Directories.txt','wt');
             fprintf(fid,'%s\n',All_Exp(i).name);
@@ -245,6 +249,8 @@ else
             temp = dir([handles.expDir filesep 'Results*']);
             if isempty(temp)
                 handles.proceed = 1;
+                mkdir([handles.expDir filesep 'Segmented_' date ]);
+                mkdir([handles.expDir filesep 'Results_' date]);
             else
                 handles.proceed = 0;
             end
